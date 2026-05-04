@@ -78,23 +78,40 @@ Framework:   Next.js 14 (App Router) + TypeScript
 
 ## §3 — Workflow de desarrollo
 
+**Ruta local del repo:** `C:\Users\FELIP\Documents\GitHub\Chatbotharamara`
+
+### Pasos exactos (en orden, sin saltear ninguno)
+
 ```
 1. Claude genera archivo patch: patch-bot-vN-descripcion.mjs
+
 2. Felipe descarga a: C:\Users\FELIP\Downloads\
-3. Felipe corre: node "C:\Users\FELIP\Downloads\patch-bot-vN.mjs"
-4. Felipe verifica los archivos modificados
-5. Felipe corre: cd haramara-bot && npx tsc --noEmit
-6. Si TypeScript verde:
-   git add [archivos]
+   y corre:
+   cd "C:\Users\FELIP\Documents\GitHub\Chatbotharamara"
+   node "C:\Users\FELIP\Downloads\patch-bot-vN-descripcion.mjs"
+
+3. Felipe corre los tests:
+   npx vitest run __tests__/nombre-del-test
+
+4. Felipe corre TypeScript:
+   npx tsc --noEmit
+
+5. Si tests y TypeScript están verdes:
+   git add -A
    git commit -m "feat: descripcion"
    git push
-7. Vercel auto-deploya desde el push
-8. Si falla: Claude corrige el patch, volver a paso 2.
+
+6. Vercel auto-deploya desde el push.
+   Si falla el build en Vercel → Claude corrige el patch, volver a paso 1.
 ```
 
-**Nunca hacer commit si tsc falla.**
+**Reglas absolutas de este workflow:**
+- Claude NUNCA genera código inline para modificar archivos. Siempre genera el `.mjs`.
+- Nunca hacer commit si `tsc` falla — ni aunque "parezca" que el error es menor.
+- Nunca hacer commit si los tests fallan.
+- El patch debe ser idempotente: correrlo dos veces no debe romper nada.
 
-**Para cambios en Supabase:** Claude genera el SQL como comentario o archivo `.sql` separado. Felipe lo ejecuta en el SQL Editor de Supabase. No hay migraciones automáticas.
+**Para cambios en Supabase:** Claude genera el SQL como archivo `.sql` separado. Felipe lo ejecuta en el SQL Editor de Supabase. No hay migraciones automáticas.
 
 ---
 
