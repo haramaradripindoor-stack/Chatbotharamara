@@ -1,6 +1,6 @@
 import Groq from 'groq-sdk'
 import { CohereClient } from 'cohere-ai'
-import { supabaseAdmin } from './supabase'
+import { getSupabaseAdmin } from './supabase'
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 const cohere = new CohereClient({ token: process.env.COHERE_API_KEY })
@@ -30,31 +30,17 @@ export function calculateIntentScore(userMessage: string, botResponse: string): 
     'cotizacion', 'despacho', 'webpay', 'transferencia', 'pagar', 'comprar',
     'pedido', 'stock', 'disponible', 'envío', 'envio', 'delivery'
   ]
-
   const mediumIntent = [
     'cómo funciona', 'como funciona', 'compatible', 'gotero', 'sustrato',
     'litros', 'plantas', 'maceta', 'sistema', 'riego', 'automático',
     'automatico', 'kit', 'instalación', 'instalacion', 'componentes'
   ]
 
-  let score = 15 // base
-
-  for (const kw of highIntent) {
-    if (msg.includes(kw)) score += 12
-  }
-  for (const kw of mediumIntent) {
-    if (msg.includes(kw)) score += 6
-  }
-
-  // Señales de cierre
-  if (resp.includes('[ready_to_buy]') || msg.includes('cómo pago') || msg.includes('como pago')) {
-    score += 30
-  }
-
-  // Posible teléfono adicional (9 dígitos seguidos)
+  let score = 15
+  for (const kw of highIntent) { if (msg.includes(kw)) score += 12 }
+  for (const kw of mediumIntent) { if (msg.includes(kw)) score += 6 }
+  if (resp.includes('[ready_to_buy]') || msg.includes('cómo pago') || msg.includes('como pago')) score += 30
   if (/\d{9}/.test(msg)) score += 15
-
-  // Menciona plantas + número
   if (/\d+/.test(msg) && msg.includes('plant')) score += 10
 
   return Math.min(score, 100)
@@ -68,7 +54,7 @@ export async function embedText(text: string, inputType: 'search_document' | 'se
     model: 'embed-multilingual-v3.0',
     inputType,
   })
-  // @ts-ignore — cohere-ai types inconsistency
+  // @ts-ignore
   return response.embeddings[0] as number[]
 }
 
@@ -77,15 +63,12 @@ export async function embedText(text: string, inputType: 'search_document' | 'se
 export async function searchKnowledge(query: string): Promise<string> {
   try {
     const embedding = await embedText(query, 'search_query')
-
-    const { data, error } = await supabaseAdmin.rpc('search_knowledge', {
+    const { data, error } = await getSupabaseAdmin().rpc('search_knowledge', {
       query_embedding: embedding,
       match_threshold: 0.6,
       match_count: 5
     })
-
     if (error || !data || data.length === 0) return ''
-
     return data
       .map((row: { content: string; tipo: string }) => `[${row.tipo}] ${row.content}`)
       .join('\n\n')
@@ -97,7 +80,7 @@ export async function searchKnowledge(query: string): Promise<string> {
 // ─── System Prompt desde Supabase ────────────────────────────────────────────
 
 export async function getSystemPrompt(): Promise<{ prompt: string; model: string; temperatura: number; maxTokens: number }> {
-  const { data } = await supabaseAdmin
+  const { data } = await getSupabaseAdmin()
     .from('agent_config')
     .select('*')
     .eq('activo', true)
@@ -112,7 +95,6 @@ export async function getSystemPrompt(): Promise<{ prompt: string; model: string
     }
   }
 
-  // Fallback por defecto
   return {
     prompt: `Eres el asistente de ventas de Haramara Drip Indoor, tienda de sistemas de riego automático para cultivo indoor en Chile.
 
@@ -133,32 +115,26 @@ Reglas:
   }
 }
 
-// ─── Generación de respuesta RAG completa ────────────────────────────────────
+// ─── Generación de respuesta RAG ─────────────────────────────────────────────
 
 export async function generateRAGResponse(
   userMessage: string,
   history: ConversationMessage[],
   leadId: string
 ): Promise<RAGResponse> {
-  // 1. Buscar contexto relevante
   const context = await searchKnowledge(userMessage)
-
-  // 2. Obtener config del agente
   const { prompt, model, temperatura, maxTokens } = await getSystemPrompt()
 
-  // 3. Construir system prompt con contexto
   const systemWithContext = context
     ? `${prompt}\n\n--- CATÁLOGO Y CONOCIMIENTO RELEVANTE ---\n${context}\n---`
     : prompt
 
-  // 4. Historial para Groq (últimos 8 mensajes)
   const messages: { role: 'user' | 'assistant' | 'system'; content: string }[] = [
     { role: 'system', content: systemWithContext },
     ...history.slice(-8).map(m => ({ role: m.role, content: m.content })),
     { role: 'user', content: userMessage }
   ]
 
-  // 5. Llamar a Groq
   const completion = await groq.chat.completions.create({
     model,
     messages,
@@ -167,18 +143,12 @@ export async function generateRAGResponse(
   })
 
   const rawResponse = completion.choices[0]?.message?.content || 'No pude procesar tu mensaje. Por favor intenta de nuevo.'
-
-  // 6. Detectar flags
   const needsHuman = rawResponse.includes('[NEEDS_HUMAN]')
   const readyToBuy = rawResponse.includes('[READY_TO_BUY]')
-
-  // 7. Limpiar flags del mensaje visible
   const cleanMessage = rawResponse
     .replace(/\[NEEDS_HUMAN\]/g, '')
     .replace(/\[READY_TO_BUY\]/g, '')
     .trim()
-
-  // 8. Calcular intent score
   const intentScore = calculateIntentScore(userMessage, rawResponse)
 
   return { message: cleanMessage, needsHuman, readyToBuy, intentScore }
@@ -229,9 +199,7 @@ export async function markAsRead(messageId: string): Promise<void> {
         })
       }
     )
-  } catch {
-    // No interrumpir el flujo si falla el read receipt
-  }
+  } catch {}
 }
 
 // ─── Alerta a admin ───────────────────────────────────────────────────────────
@@ -241,12 +209,9 @@ export async function alertAdmin(reason: 'hot_lead' | 'needs_human', lead: { nom
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || ''
   if (!adminPhone) return
 
-  let text = ''
-  if (reason === 'hot_lead') {
-    text = `🔥 *Lead caliente!*\n\nCliente: ${lead.nombre || 'Sin nombre'}\nNúmero: +${lead.telefono}\nScore: ${lead.intent_score}/100\n\n👉 ${appUrl}/admin`
-  } else {
-    text = `🆘 *Bot necesita ayuda*\n\nCliente: ${lead.nombre || 'Sin nombre'}\nNúmero: +${lead.telefono}\n\nEl bot no puede resolver esta consulta.\n\n👉 ${appUrl}/admin`
-  }
+  const text = reason === 'hot_lead'
+    ? `🔥 *Lead caliente!*\n\nCliente: ${lead.nombre || 'Sin nombre'}\nNúmero: +${lead.telefono}\nScore: ${lead.intent_score}/100\n\n👉 ${appUrl}/admin`
+    : `🆘 *Bot necesita ayuda*\n\nCliente: ${lead.nombre || 'Sin nombre'}\nNúmero: +${lead.telefono}\n\nEl bot no puede resolver esta consulta.\n\n👉 ${appUrl}/admin`
 
   await sendWhatsAppMessage(adminPhone, text)
 }
