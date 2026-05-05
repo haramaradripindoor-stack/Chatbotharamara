@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getSupabase } from '@/lib/supabase'
 
 const ADMIN_SECRET = process.env.NEXT_PUBLIC_ADMIN_SECRET || ''
 
@@ -63,9 +63,9 @@ export default function ConfigPage() {
 
   async function loadAll() {
     const [{ data: cfg }, { data: prods }, { data: faqsData }] = await Promise.all([
-      supabase.from('agent_config').select('*').eq('activo', true).single(),
-      supabase.from('products').select('id, nombre, categoria, precio_desde, disponible').order('nombre'),
-      supabase.from('faqs').select('*').order('created_at', { ascending: false })
+      getSupabase().from('agent_config').select('*').eq('activo', true).single(),
+      getSupabase().from('products').select('id, nombre, categoria, precio_desde, disponible').order('nombre'),
+      getSupabase().from('faqs').select('*').order('created_at', { ascending: false })
     ])
     if (cfg) setConfig(cfg)
     if (prods) setProducts(prods)
@@ -75,7 +75,7 @@ export default function ConfigPage() {
   async function saveConfig() {
     if (!config) return
     setSaving(true)
-    await supabase.from('agent_config').update({
+    await getSupabase().from('agent_config').update({
       system_prompt: config.system_prompt,
       modelo: config.modelo,
       temperatura: config.temperatura,
@@ -85,13 +85,13 @@ export default function ConfigPage() {
   }
 
   async function toggleProduct(id: string, current: boolean) {
-    await supabase.from('products').update({ disponible: !current }).eq('id', id)
+    await getSupabase().from('products').update({ disponible: !current }).eq('id', id)
     setProducts(prev => prev.map(p => p.id === id ? { ...p, disponible: !current } : p))
   }
 
   async function addFaq() {
     if (!newFaqP.trim() || !newFaqR.trim()) return
-    const { data } = await supabase.from('faqs')
+    const { data } = await getSupabase().from('faqs')
       .insert({ pregunta: newFaqP.trim(), respuesta: newFaqR.trim(), activo: true })
       .select().single()
     if (data) {
@@ -102,13 +102,13 @@ export default function ConfigPage() {
   }
 
   async function toggleFaq(id: string, current: boolean) {
-    await supabase.from('faqs').update({ activo: !current }).eq('id', id)
+    await getSupabase().from('faqs').update({ activo: !current }).eq('id', id)
     setFaqs(prev => prev.map(f => f.id === id ? { ...f, activo: !current } : f))
   }
 
   async function addChunk() {
     if (!chunkTitle.trim() || !chunkContent.trim()) return
-    await supabase.from('knowledge_chunks').insert({
+    await getSupabase().from('knowledge_chunks').insert({
       titulo: chunkTitle.trim(),
       tipo: chunkType,
       content: chunkContent.trim()
