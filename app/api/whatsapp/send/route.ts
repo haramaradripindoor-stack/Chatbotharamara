@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     const db = getSupabaseAdmin()
     await db.from('conversations').insert({ lead_id: leadId, role: 'human', content: message })
-    await db.from('leads').update({ updated_at: new Date().toISOString() }).eq('id', leadId)
+    await db.from('wa_leads').update({ updated_at: new Date().toISOString() }).eq('id', leadId)
 
     return NextResponse.json({ ok: true })
   } catch (err) {

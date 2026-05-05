@@ -44,15 +44,15 @@ export async function POST(request: NextRequest) {
 
     await markAsRead(messageId)
 
-    let { data: lead } = await db.from('leads').select('*').eq('telefono', from).single()
+    let { data: lead } = await db.from('wa_leads').select('*').eq('telefono', from).single()
     if (!lead) {
-      const { data: newLead } = await db.from('leads').insert({
+      const { data: newLead } = await db.from('wa_leads').insert({
         nombre: name, telefono: from, canal: 'whatsapp',
         estado: 'consulta', intent_score: 0, modo_manual: false, listo_comprar: false
       }).select().single()
       lead = newLead
     } else if (lead.nombre === 'Sin nombre' && name !== 'Sin nombre') {
-      await db.from('leads').update({ nombre: name }).eq('id', lead.id)
+      await db.from('wa_leads').update({ nombre: name }).eq('id', lead.id)
       lead.nombre = name
     }
 
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     const updates: Record<string, unknown> = { intent_score: intentScore }
     if (readyToBuy) { updates.listo_comprar = true; updates.estado = 'cotizacion' }
     if (needsHuman) { updates.modo_manual = true; updates.estado = 'seguimiento' }
-    await db.from('leads').update(updates).eq('id', lead.id)
+    await db.from('wa_leads').update(updates).eq('id', lead.id)
 
     if (intentScore >= 75 && !readyToBuy) await alertAdmin('hot_lead', { ...lead, intent_score: intentScore })
     if (needsHuman) await alertAdmin('needs_human', lead)

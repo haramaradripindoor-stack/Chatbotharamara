@@ -45,7 +45,7 @@ export default function AdminPage() {
 
   const loadLeads = useCallback(async () => {
     const db = getSupabase()
-    const { data } = await db.from('leads').select('*').order('updated_at', { ascending: false })
+    const { data } = await db.from('wa_leads').select('*').order('updated_at', { ascending: false })
     if (data) setLeads(data)
   }, [])
 
@@ -53,8 +53,8 @@ export default function AdminPage() {
     if (!authed) return
     loadLeads()
     const db = getSupabase()
-    const channel = db.channel('leads-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => loadLeads())
+    const channel = db.channel('wa-leads-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wa_leads' }, () => loadLeads())
       .subscribe()
     return () => { db.removeChannel(channel) }
   }, [authed, loadLeads])
@@ -75,7 +75,7 @@ export default function AdminPage() {
 
   async function toggleManual(lead: Lead) {
     const newVal = !lead.modo_manual
-    await getSupabase().from('leads').update({ modo_manual: newVal }).eq('id', lead.id)
+    await getSupabase().from('wa_leads').update({ modo_manual: newVal }).eq('id', lead.id)
     setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, modo_manual: newVal } : l))
     if (selectedLead?.id === lead.id) setSelectedLead(prev => prev ? { ...prev, modo_manual: newVal } : prev)
   }
@@ -96,7 +96,7 @@ export default function AdminPage() {
   async function saveNotes() {
     if (!selectedLead) return
     setSavingNotes(true)
-    await getSupabase().from('leads').update({ notas: notes }).eq('id', selectedLead.id)
+    await getSupabase().from('wa_leads').update({ notas: notes }).eq('id', selectedLead.id)
     setLeads(prev => prev.map(l => l.id === selectedLead.id ? { ...l, notas: notes } : l))
     setSavingNotes(false)
   }
