@@ -64,7 +64,7 @@ export default function ConfigPage() {
   async function loadAll() {
     const [{ data: cfg }, { data: prods }, { data: faqsData }] = await Promise.all([
       getSupabase().from('agent_config').select('*').eq('activo', true).single(),
-      getSupabase().from('products').select('id, nombre, categoria, precio_desde, disponible').order('nombre'),
+      getSupabase().from('wa_products').select('id, nombre, categoria, precio_desde, disponible').order('nombre'),
       getSupabase().from('faqs').select('*').order('created_at', { ascending: false })
     ])
     if (cfg) setConfig(cfg)
@@ -85,7 +85,7 @@ export default function ConfigPage() {
   }
 
   async function toggleProduct(id: string, current: boolean) {
-    await getSupabase().from('products').update({ disponible: !current }).eq('id', id)
+    await getSupabase().from('wa_products').update({ disponible: !current }).eq('id', id)
     setProducts(prev => prev.map(p => p.id === id ? { ...p, disponible: !current } : p))
   }
 

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const results = { products: 0, faqs: 0, chunks: 0, errors: [] as string[] }
 
   try {
-    const { data: products } = await db.from('products')
+    const { data: products } = await db.from('wa_products')
       .select('id, nombre, categoria, descripcion, componentes, uso_ideal, precio_desde')
       .eq('disponible', true)
     for (const product of products || []) {
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
         product.precio_desde ? `Precio desde: $${product.precio_desde.toLocaleString('es-CL')} CLP` : ''
       ].filter(Boolean).join('\n')
       const embedding = await embedText(text, 'search_document')
-      await db.from('products').update({ embedding }).eq('id', product.id)
+      await db.from('wa_products').update({ embedding }).eq('id', product.id)
       results.products++
     }
   } catch (err) { results.errors.push(`products: ${err}`) }
