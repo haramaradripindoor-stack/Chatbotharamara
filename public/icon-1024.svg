@@ -1,0 +1,24 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1024" height="1024" fill="#0a2a1a"/>
+  
+  <!-- Círculo fondo verde -->
+  <circle cx="512" cy="420" r="280" fill="#1a4a2a"/>
+  
+  <!-- Gota de agua estilizada -->
+  <path d="M512 200 C512 200 360 380 360 460 C360 543 429 610 512 610 C595 610 664 543 664 460 C664 380 512 200 512 200Z" fill="#2d8a4a"/>
+  <path d="M512 200 C512 200 440 350 430 440 C420 500 460 560 512 570" fill="#3aaa5a" opacity="0.5"/>
+  
+  <!-- Líneas de gotero -->
+  <line x1="440" y1="640" x2="420" y2="760" stroke="#2d8a4a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="512" y1="640" x2="512" y2="780" stroke="#2d8a4a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="584" y1="640" x2="604" y2="760" stroke="#2d8a4a" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Gotas en la punta -->
+  <circle cx="420" cy="775" r="16" fill="#3aaa5a"/>
+  <circle cx="512" cy="795" r="16" fill="#3aaa5a"/>
+  <circle cx="604" cy="775" r="16" fill="#3aaa5a"/>
+  
+  <!-- Texto HARAMARA -->
+  <text x="512" y="900" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="72" font-weight="900" fill="#ffffff" letter-spacing="4">HARAMARA</text>
+  <text x="512" y="960" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#3aaa5a" letter-spacing="8">DRIP</text>
+</svg>
