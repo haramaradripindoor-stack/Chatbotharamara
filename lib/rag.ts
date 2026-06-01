@@ -2,8 +2,8 @@ import Groq from 'groq-sdk'
 import { CohereClient } from 'cohere-ai'
 import { getSupabaseAdmin } from './supabase'
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-const cohere = new CohereClient({ token: process.env.COHERE_API_KEY })
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || 'dummy_key_for_build' })
+const cohere = new CohereClient({ token: process.env.COHERE_API_KEY || 'dummy_key_for_build' })
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -19,32 +19,7 @@ export interface RAGResponse {
   intentScore: number
 }
 
-// ─── Intent Score (keyword-based, NO IA) ─────────────────────────────────────
-
-export function calculateIntentScore(userMessage: string, botResponse: string): number {
-  const msg = userMessage.toLowerCase()
-  const resp = botResponse.toLowerCase()
-
-  const highIntent = [
-    'precio', 'cuánto vale', 'cuanto vale', 'quiero comprar', 'cotización',
-    'cotizacion', 'despacho', 'webpay', 'transferencia', 'pagar', 'comprar',
-    'pedido', 'stock', 'disponible', 'envío', 'envio', 'delivery'
-  ]
-  const mediumIntent = [
-    'cómo funciona', 'como funciona', 'compatible', 'gotero', 'sustrato',
-    'litros', 'plantas', 'maceta', 'sistema', 'riego', 'automático',
-    'automatico', 'kit', 'instalación', 'instalacion', 'componentes'
-  ]
-
-  let score = 15
-  for (const kw of highIntent) { if (msg.includes(kw)) score += 12 }
-  for (const kw of mediumIntent) { if (msg.includes(kw)) score += 6 }
-  if (resp.includes('[ready_to_buy]') || msg.includes('cómo pago') || msg.includes('como pago')) score += 30
-  if (/\d{9}/.test(msg)) score += 15
-  if (/\d+/.test(msg) && msg.includes('plant')) score += 10
-
-  return Math.min(score, 100)
-}
+// calculateIntentScore eliminado: La IA ahora asigna el intent_score de forma nativa vía JSON.
 
 // ─── Embeddings con Cohere ────────────────────────────────────────────────────
 
@@ -104,11 +79,18 @@ Tu objetivo es:
 3. Calificar si el cliente tiene intención de compra
 
 Reglas:
-- Responde siempre en español, en forma amigable y profesional
-- Si el cliente quiere comprar o está listo para hacerlo, incluye [READY_TO_BUY] en tu respuesta
-- Si no puedes ayudar o el cliente necesita asesoría especializada, incluye [NEEDS_HUMAN] en tu respuesta
-- Limita respuestas a 300 palabras máximo
-- NO inventes precios ni productos que no estén en el contexto`,
+- Responde SIEMPRE en español, en forma amigable y profesional.
+- Limita respuestas a 300 palabras máximo.
+- NO inventes precios ni productos que no estén en el contexto.
+
+INSTRUCCIÓN CRÍTICA: Debes responder EXCLUSIVAMENTE con un objeto JSON válido.
+El formato esperado es:
+{
+  "message": "Tu respuesta para el cliente",
+  "intentScore": 85, // Tu calificación del 1 al 100 de la intención de compra
+  "readyToBuy": true, // true si quiere pagar/comprar ahora, false de lo contrario
+  "needsHuman": false // true si le haces una pregunta técnica que no puedes resolver
+}`,
     model: 'llama-3.3-70b-versatile',
     temperatura: 0.7,
     maxTokens: 800
@@ -139,19 +121,29 @@ export async function generateRAGResponse(
     model,
     messages,
     temperature: temperatura,
-    max_tokens: maxTokens
+    max_tokens: maxTokens,
+    response_format: { type: 'json_object' }
   })
 
-  const rawResponse = completion.choices[0]?.message?.content || 'No pude procesar tu mensaje. Por favor intenta de nuevo.'
-  const needsHuman = rawResponse.includes('[NEEDS_HUMAN]')
-  const readyToBuy = rawResponse.includes('[READY_TO_BUY]')
-  const cleanMessage = rawResponse
-    .replace(/\[NEEDS_HUMAN\]/g, '')
-    .replace(/\[READY_TO_BUY\]/g, '')
-    .trim()
-  const intentScore = calculateIntentScore(userMessage, rawResponse)
-
-  return { message: cleanMessage, needsHuman, readyToBuy, intentScore }
+  const rawResponse = completion.choices[0]?.message?.content || '{}'
+  
+  try {
+    const parsed = JSON.parse(rawResponse)
+    return {
+      message: parsed.message || 'No pude procesar tu mensaje. Por favor intenta de nuevo.',
+      needsHuman: Boolean(parsed.needsHuman),
+      readyToBuy: Boolean(parsed.readyToBuy),
+      intentScore: typeof parsed.intentScore === 'number' ? parsed.intentScore : 15
+    }
+  } catch (error) {
+    console.error('Error parsing Groq JSON response:', error)
+    return { 
+      message: rawResponse, 
+      needsHuman: true, 
+      readyToBuy: false, 
+      intentScore: 0 
+    }
+  }
 }
 
 // ─── Envío de mensaje WhatsApp ────────────────────────────────────────────────

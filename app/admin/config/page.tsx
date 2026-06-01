@@ -34,6 +34,7 @@ export default function ConfigPage() {
   const [saving, setSaving] = useState(false)
   const [indexing, setIndexing] = useState(false)
   const [indexMsg, setIndexMsg] = useState('')
+  const [parsingPdf, setParsingPdf] = useState(false)
 
   // Agente
   const [config, setConfig] = useState<AgentConfig | null>(null)
@@ -116,6 +117,31 @@ export default function ConfigPage() {
     setChunkTitle('')
     setChunkContent('')
     alert('Chunk guardado. Acordate de re-indexar.')
+  }
+
+  async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    
+    setParsingPdf(true)
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('secret', ADMIN_SECRET)
+
+    try {
+      const res = await fetch('/api/parse-pdf', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (res.ok && data.text) {
+        setChunkContent(prev => prev + '\n\n' + data.text)
+        if (!chunkTitle) setChunkTitle(file.name.replace('.pdf', ''))
+      } else {
+        alert(`Error: ${data.error}`)
+      }
+    } catch (err) {
+      alert('Error de conexión al parsear PDF')
+    }
+    setParsingPdf(false)
+    e.target.value = '' // reset input
   }
 
   async function runIndex() {
@@ -319,6 +345,14 @@ export default function ConfigPage() {
                 <option value="precio">Precio</option>
                 <option value="instalacion">Instalación</option>
               </select>
+            </div>
+
+            <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <label style={{ ...btnStyle, background: '#374151', fontSize: 12, cursor: 'pointer', display: 'inline-block' }}>
+                {parsingPdf ? 'Extrayendo texto...' : '📄 Subir PDF y extraer texto'}
+                <input type="file" accept=".pdf" onChange={handlePdfUpload} disabled={parsingPdf} style={{ display: 'none' }} />
+              </label>
+              {parsingPdf && <span style={{ color: '#888', fontSize: 12 }}>Esto puede tardar unos segundos...</span>}
             </div>
 
             <textarea
