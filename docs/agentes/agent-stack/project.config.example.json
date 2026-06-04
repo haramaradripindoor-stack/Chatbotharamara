@@ -1,0 +1,14 @@
+{
+  "stack": "Next.js 14 (App Router) + Supabase + TypeScript + Tailwind + Vercel",
+  "platform": "ambas",
+  "userLevel": "medio",
+  "clientOrPersonal": "Para cliente",
+  "projectName": "carrerasrm",
+  "problem": "Los coordinadores de transporte registran carreras en papel y pierden trazabilidad.",
+  "mvp": "Registrar una carrera completada y verla en una lista filtrable.",
+  "user": "transportista chileno que usa el sistema en terreno desde el celular",
+  "mainAction": "registrar una carrera completada",
+  "entities": "usuarios, carreras, vehiculos, conductores, liquidaciones",
+  "roles": "admin, coordinador, conductor",
+  "domain": "gestión de transporte de carga y pasajeros en Chile"
+}

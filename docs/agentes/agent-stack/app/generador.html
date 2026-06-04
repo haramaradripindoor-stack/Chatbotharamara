@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FORJA · generador de diseño · agentes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --bg:#080810; --surface:#0e0e1a; --surface2:#13131f; --border:#1a1a2e; --border2:#252540;
+  --accent:#e8ff47; --accent2:#ff6b35; --text:#e2e2f0; --muted:#6a6a8a; --muted2:#4a4a6a;
+  --success:#22c55e; --mono:'Space Mono',ui-monospace,monospace; --sans:'Syne',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--mono); font-size:14px; line-height:1.6;
+  background-image:
+    radial-gradient(900px 500px at 100% -5%, rgba(232,255,71,.06), transparent 60%),
+    radial-gradient(700px 500px at -5% 10%, rgba(124,58,237,.07), transparent 60%),
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size:auto,auto,42px 42px,42px 42px;
+  background-position:0 0,0 0,-1px -1px,-1px -1px;
+  min-height:100vh;
+}
+.wrap{max-width:1320px;margin:0 auto;padding:0 22px}
+a{color:var(--accent)}
+::selection{background:var(--accent);color:#000}
+
+/* header */
+header{position:sticky;top:0;z-index:30;backdrop-filter:blur(12px);
+  background:rgba(8,8,16,.82);border-bottom:1px solid var(--border2)}
+.bar{display:flex;align-items:center;gap:18px;padding:14px 0}
+.logo{font-family:var(--sans);font-weight:800;font-size:22px;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+.logo .dot{width:10px;height:10px;background:var(--accent);border-radius:2px;box-shadow:0 0 14px var(--accent)}
+.logo small{font-family:var(--mono);font-weight:400;color:var(--muted);font-size:11px;letter-spacing:.04em}
+.bar .spacer{flex:1}
+.rule1{font-size:10.5px;color:var(--accent);border:1px solid rgba(232,255,71,.35);
+  padding:5px 10px;border-radius:999px;background:rgba(232,255,71,.05);letter-spacing:.03em;white-space:nowrap}
+.hbtns{display:flex;gap:8px;flex-wrap:wrap}
+button{font-family:var(--mono);cursor:pointer;border:none;background:none;color:inherit;font-size:13px}
+.btn{border:1px solid var(--border2);background:var(--surface2);color:var(--text);
+  padding:8px 13px;border-radius:9px;font-size:12px;transition:.15s;white-space:nowrap;display:inline-flex;gap:7px;align-items:center}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+.btn.primary:hover{filter:brightness(1.08);color:#000}
+.btn.ghost{background:transparent}
+
+/* hero */
+.hero{padding:34px 0 18px}
+.kicker{color:var(--muted);font-size:12px;letter-spacing:.06em;margin-bottom:12px}
+.kicker b{color:var(--accent2)}
+h1{font-family:var(--sans);font-weight:800;font-size:clamp(34px,6vw,62px);line-height:.98;letter-spacing:-.03em}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{color:var(--muted);max-width:62ch;margin-top:16px;font-size:14px}
+.stats{display:flex;gap:26px;margin-top:22px;flex-wrap:wrap}
+.stat .n{font-family:var(--sans);font-weight:800;font-size:26px;color:var(--accent)}
+.stat .l{font-size:11px;color:var(--muted)}
+/* pipeline strip */
+.pipe{display:flex;gap:6px;flex-wrap:wrap;margin-top:26px;align-items:center}
+.pchip{display:flex;align-items:center;gap:8px;border:1px solid var(--border2);background:var(--surface);
+  padding:6px 11px;border-radius:8px;font-size:11px}
+.pchip b{width:7px;height:7px;border-radius:50%}
+.parrow{color:var(--muted2)}
+
+/* layout */
+.grid{display:grid;grid-template-columns:392px 1fr;gap:22px;align-items:start;padding:26px 0 70px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--border2);border-radius:16px;overflow:hidden}
+aside.panel{position:sticky;top:74px}
+@media(max-width:980px){aside.panel{position:static}}
+.phead{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.phead .t{font-family:var(--sans);font-weight:700;font-size:14px}
+.phead .c{font-size:10px;color:var(--muted);margin-left:auto}
+
+/* form */
+.formscroll{max-height:calc(100vh - 220px);overflow:auto}
+@media(max-width:980px){.formscroll{max-height:none}}
+.section{border-bottom:1px solid var(--border)}
+.section>summary{list-style:none;cursor:pointer;padding:13px 16px;display:flex;align-items:center;gap:10px;
+  font-family:var(--sans);font-weight:600;font-size:12.5px;color:var(--text);user-select:none}
+.section>summary::-webkit-details-marker{display:none}
+.section>summary .idx{font-family:var(--mono);font-size:10px;color:var(--accent);border:1px solid var(--border2);
+  border-radius:5px;padding:2px 6px}
+.section>summary .chev{margin-left:auto;color:var(--muted);transition:.2s}
+.section[open]>summary .chev{transform:rotate(90deg)}
+.section[open]>summary{color:var(--accent)}
+.fields{padding:6px 16px 16px}
+.field{margin-top:12px}
+.field label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;letter-spacing:.02em}
+.field input,.field textarea,.field select{
+  width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);
+  border-radius:9px;padding:9px 11px;font-family:var(--mono);font-size:13px;resize:vertical}
+.field textarea{min-height:58px;line-height:1.5}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(232,255,71,.1)}
+.field .hint{font-size:10px;color:var(--muted2);margin-top:4px}
+.formfoot{padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap}
+
+/* output */
+.tabs{display:flex;gap:4px;padding:12px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;
+  position:sticky;top:0;background:var(--surface);z-index:5}
+.tab{padding:8px 13px;border-radius:9px;font-size:12px;color:var(--muted);border:1px solid transparent;display:flex;gap:8px;align-items:center}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-color:var(--border2);background:var(--surface2)}
+.tab .badge{font-size:10px;background:var(--border2);color:var(--text);border-radius:6px;padding:1px 6px}
+.tabwrap{padding:18px}
+.tabpanel{display:none}
+.tabpanel.active{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+.note{font-size:11.5px;color:var(--muted);margin-bottom:16px;border-left:2px solid var(--accent2);padding-left:12px}
+
+/* doc cards */
+.doc{border:1px solid var(--border2);border-radius:12px;margin-bottom:10px;overflow:hidden;background:var(--surface2)}
+.doc>summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;align-items:center;gap:11px;user-select:none}
+.doc>summary::-webkit-details-marker{display:none}
+.doc .fname{font-size:12.5px;color:var(--text)}
+.doc .fpath{font-size:10px;color:var(--muted);margin-left:2px}
+.doc .chev{color:var(--muted);transition:.2s}
+.doc[open] .chev{transform:rotate(90deg)}
+.doc .copy{margin-left:auto}
+.codewrap{position:relative;border-top:1px solid var(--border)}
+pre{font-family:var(--mono);font-size:12px;line-height:1.6;padding:15px;overflow:auto;max-height:440px;
+  white-space:pre-wrap;word-break:break-word;color:#cfcfe6;background:var(--bg)}
+pre .ph{color:var(--accent2);background:rgba(255,107,53,.1);border-radius:3px;padding:0 2px}
+.copy{font-size:11px;border:1px solid var(--border2);background:var(--surface);color:var(--muted);
+  padding:5px 10px;border-radius:7px;transition:.15s}
+.copy:hover{border-color:var(--accent);color:var(--accent)}
+.copy.ok{border-color:var(--success);color:var(--success)}
+
+/* agent cards */
+.lvl{margin:6px 0 22px}
+.lvl-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px dashed var(--border2)}
+.lvl-h .num{font-family:var(--sans);font-weight:800;font-size:13px;color:var(--muted2)}
+.lvl-h .nm{font-family:var(--sans);font-weight:700;font-size:15px}
+.lvl-h .ds{font-size:11px;color:var(--muted);margin-left:auto;text-align:right}
+.agent{border:1px solid var(--border2);border-left-width:3px;border-radius:12px;margin-bottom:12px;background:var(--surface2);overflow:hidden}
+.agent>summary{list-style:none;cursor:pointer;padding:13px 15px;display:flex;align-items:center;gap:12px;user-select:none}
+.agent>summary::-webkit-details-marker{display:none}
+.agent .emoji{font-size:20px;width:26px;text-align:center}
+.agent .nm{font-family:var(--sans);font-weight:700;font-size:14px}
+.agent .lv{font-size:10px;color:var(--muted)}
+.agent .tag{font-size:11px;color:var(--muted);margin-top:2px;max-width:52ch}
+.agent .chev{margin-left:auto;color:var(--muted);transition:.2s}
+.agent[open] .chev{transform:rotate(90deg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 15px 12px}
+.chip{font-size:10.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--border2)}
+.chip.x{color:#ff8f8f;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.06)}
+.chip.ok{color:#9be7b4;border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.06)}
+.agent-body{padding:0 15px 15px;border-top:1px solid var(--border)}
+.mini{display:flex;gap:8px;align-items:center;margin:13px 0 7px;font-size:11px;color:var(--muted)}
+.mini::before{content:"//";color:var(--muted2)}
+.outlist{list-style:none;font-size:12px;color:#cfcfe6}
+.outlist li{padding:4px 0 4px 16px;position:relative}
+.outlist li::before{content:"→";position:absolute;left:0;color:var(--accent)}
+
+/* kickoff */
+.ko{border:1px solid var(--border2);border-radius:12px;margin-bottom:10px;background:var(--surface2);overflow:hidden}
+.ko>summary{list-style:none;cursor:pointer;padding:13px 15px;display:flex;align-items:center;gap:12px;user-select:none}
+.ko>summary::-webkit-details-marker{display:none}
+.ko .time{font-size:10.5px;color:var(--accent);border:1px solid var(--border2);border-radius:6px;padding:3px 8px;white-space:nowrap}
+.ko .knum{font-family:var(--sans);font-weight:800;color:var(--muted2);font-size:14px}
+.ko .ktitle{font-family:var(--sans);font-weight:700;font-size:14px}
+.ko .kmode{font-size:9.5px;letter-spacing:.12em;color:var(--muted);margin-left:auto;border:1px solid var(--border2);padding:3px 8px;border-radius:6px}
+.ko .chev{color:var(--muted);transition:.2s}.ko[open] .chev{transform:rotate(90deg)}
+.ko-body{padding:4px 15px 15px;border-top:1px solid var(--border)}
+.checks{list-style:none}
+.checks li{display:flex;gap:10px;align-items:flex-start;padding:6px 0;font-size:12.5px;color:#cfcfe6}
+.checks input{margin-top:3px;accent-color:var(--accent);width:14px;height:14px}
+.checks li.done span{text-decoration:line-through;color:var(--muted)}
+
+footer{border-top:1px solid var(--border2);padding:24px 0;color:var(--muted);font-size:11px;text-align:center}
+
+/* toast */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--accent);color:#000;padding:11px 18px;border-radius:10px;font-size:12.5px;font-weight:700;
+  opacity:0;pointer-events:none;transition:.25s;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+input[type=file]{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <div class="logo"><span class="dot"></span>FORJA<small>// diseño antes que código</small></div>
+    <div class="spacer"></div>
+    <span class="rule1">regla #1 · no se programa sin diseño aprobado</span>
+    <div class="hbtns">
+      <button class="btn ghost" id="loadExample">◇ cargar ejemplo</button>
+      <button class="btn ghost" id="importBtn">↑ importar</button>
+      <button class="btn ghost" id="exportBtn">↓ config</button>
+      <button class="btn primary" id="zipBtn">⬇ descargar .zip</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap hero">
+  <div class="kicker">// generador de proyectos · <b>Next.js + Supabase</b> · 11 agentes · pipeline de 7 fases</div>
+  <h1>Diseña el proyecto<br><em>entero</em> antes del<br>primer commit.</h1>
+  <p class="lede">Llena el contexto una vez. Obtén los documentos de diseño en markdown, los prompts de cada agente ya rellenados, el prompt maestro de orquestación y el checklist del día de arranque. Copia, descarga el <code>.zip</code> con la estructura de carpetas, o expórtalo para el scaffold.</p>
+  <div class="stats">
+    <div class="stat"><div class="n" id="stAgents">11</div><div class="l">agentes</div></div>
+    <div class="stat"><div class="n">7</div><div class="l">fases del pipeline</div></div>
+    <div class="stat"><div class="n" id="stDocs">13</div><div class="l">documentos .md</div></div>
+    <div class="stat"><div class="n">1</div><div class="l">fuente de verdad</div></div>
+  </div>
+  <div class="pipe" id="pipe"></div>
+</div>
+
+<div class="wrap grid">
+  <!-- FORM -->
+  <aside class="panel">
+    <div class="phead"><span class="t">Contexto del proyecto</span><span class="c" id="fillc">0/22</span></div>
+    <div class="formscroll" id="form"></div>
+    <div class="formfoot">
+      <button class="btn primary" id="regen" style="flex:1">↻ regenerar</button>
+      <button class="btn ghost" id="resetBtn">limpiar</button>
+    </div>
+  </aside>
+
+  <!-- OUTPUT -->
+  <main class="panel">
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="docs">📄 documentos <span class="badge" id="bDocs">13</span></button>
+      <button class="tab" data-tab="agents">🤖 agentes <span class="badge" id="bAgents">11</span></button>
+      <button class="tab" data-tab="master">🎯 prompt maestro</button>
+      <button class="tab" data-tab="kick">🗓️ día de arranque</button>
+    </div>
+    <div class="tabwrap">
+      <div class="tabpanel active" id="tab-docs">
+        <div class="note" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+          <span>Documentos de diseño rellenados con tu contexto. Lo que falta aparece como <code>_(pendiente)_</code>. Es el contenido que generan tus agentes — empieza por <b>CLAUDE.md</b>.</span>
+          <button class="btn ghost" id="copyAllDocs">⧉ copiar todo</button>
+        </div>
+        <div id="docs"></div>
+      </div>
+      <div class="tabpanel" id="tab-agents">
+        <div class="note">Prompts de sistema de cada agente, rellenados con la identidad del proyecto. Los <span style="color:var(--accent2)">[CORCHETES]</span> que quedan son variables de la tarea concreta — complétalos al usar el agente.</div>
+        <div id="agents"></div>
+      </div>
+      <div class="tabpanel" id="tab-master">
+        <div class="note">El prompt que convierte tu sistema de agentes en un equipo completo: CTOAgent orquesta, diseño por fases, aprobación en cada gate.</div>
+        <div id="master"></div>
+      </div>
+      <div class="tabpanel" id="tab-kick">
+        <div class="note">Protocolo de un día para arrancar de cero a primer commit productivo. Marca a medida que avanzas (no se guarda).</div>
+        <div id="kick"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer class="wrap">FORJA · generador de diseño + prompts + scaffold · una sola fuente de verdad · diseño antes que código</footer>
+<div id="toast"></div>
+<input type="file" id="fileInput" accept="application/json,.json">
+
+<script>
+const DATA = {"fields": [{"key": "projectName", "label": "Nombre del proyecto", "type": "text", "placeholder": "Ej: carrerasrm, Constructora Garabito", "help": "Identidad. Aparece en cada prompt y documento.", "section": "Identidad", "options": null}, {"key": "problem", "label": "Problema (una frase)", "type": "textarea", "placeholder": "Si no cabe en una frase, no está claro.", "help": "El dolor que resuelves. Una sola frase.", "section": "Identidad", "options": null}, {"key": "mvp", "label": "MVP — resultado mínimo con valor", "type": "textarea", "placeholder": "Lo mínimo que ya entrega valor. No el ideal.", "help": "Tu MVP real, no el v2.", "section": "Identidad", "options": null}, {"key": "clientOrPersonal", "label": "¿Cliente o personal?", "type": "select", "placeholder": "", "help": "Afecta monetización, deadline y scope.", "section": "Identidad", "options": ["Para cliente", "Para mí", "Interno / equipo"]}, {"key": "deadline", "label": "Fecha de entrega real", "type": "text", "placeholder": "Ej: 30 jun · sin fecha = nunca", "help": "Sin fecha concreta, recorta scope.", "section": "Identidad", "options": null}, {"key": "user", "label": "Usuario principal", "type": "textarea", "placeholder": "Ej: \"transportista chileno que usa el sistema en terreno desde el celular\"", "help": "Quién lo usa, en qué contexto.", "section": "Usuario & UX", "options": null}, {"key": "userLevel", "label": "Nivel técnico del usuario", "type": "select", "placeholder": "", "help": "Condiciona toda la UX.", "section": "Usuario & UX", "options": ["bajo", "medio", "alto"]}, {"key": "frequency", "label": "Frecuencia de uso", "type": "text", "placeholder": "Ej: varias veces al día / semanal", "help": "Cada cuánto vuelve el usuario.", "section": "Usuario & UX", "options": null}, {"key": "mainAction", "label": "Acción más frecuente", "type": "textarea", "placeholder": "Ej: \"registrar una carrera completada\"", "help": "Lo que hace en el 80% de las visitas.", "section": "Usuario & UX", "options": null}, {"key": "platform", "label": "Plataforma", "type": "select", "placeholder": "", "help": "Dónde vive la app.", "section": "Usuario & UX", "options": ["mobile", "desktop", "ambas"]}, {"key": "entities", "label": "Entidades principales", "type": "textarea", "placeholder": "Ej: \"usuarios, proyectos, cotizaciones, items_cotización\"", "help": "5 o menos para un MVP.", "section": "Datos & roles", "options": null}, {"key": "roles", "label": "Roles de usuario", "type": "textarea", "placeholder": "Ej: \"admin, operador, cliente_externo\"", "help": "Quién lee, quién escribe. Define la RLS.", "section": "Datos & roles", "options": null}, {"key": "sensitiveData", "label": "Datos sensibles", "type": "textarea", "placeholder": "Ej: \"RUT, datos financieros, coordenadas GPS, contratos\"", "help": "Lo que el SecurityAgent debe proteger.", "section": "Datos & roles", "options": null}, {"key": "volume", "label": "Volumen esperado", "type": "text", "placeholder": "Ej: \"~500 cotizaciones/mes, 50 usuarios activos\"", "help": "Filas estimadas por tabla y usuarios.", "section": "Datos & roles", "options": null}, {"key": "volumeProjection", "label": "Proyección a 12 meses", "type": "text", "placeholder": "Ej: 500 usuarios concurrentes, 1M registros", "help": "Para el análisis de escala.", "section": "Datos & roles", "options": null}, {"key": "domain", "label": "Dominio del negocio", "type": "textarea", "placeholder": "Ej: contratación pública chilena / transporte de carga", "help": "El moat. Lo que el DomainBot conoce.", "section": "Negocio", "options": null}, {"key": "domainKnowledge", "label": "Conocimiento / normativa específica", "type": "textarea", "placeholder": "Ej: Ley 19.886, tipos de licitación, plazos legales…", "help": "Reglas reales del dominio (una por línea).", "section": "Negocio", "options": null}, {"key": "stack", "label": "Stack", "type": "textarea", "placeholder": "Next.js 14 (App Router) + Supabase + TypeScript + Tailwind + Vercel", "help": "Por defecto Next.js + Supabase si no hay razón para cambiar.", "section": "Estilo & stack", "options": null}, {"key": "colorPrimary", "label": "Color primario", "type": "text", "placeholder": "#1B2A4A", "help": "Color de marca principal.", "section": "Estilo & stack", "options": null}, {"key": "colorSecondary", "label": "Color secundario", "type": "text", "placeholder": "#B8962E", "help": "Acento.", "section": "Estilo & stack", "options": null}, {"key": "risks", "label": "3 riesgos técnicos", "type": "textarea", "placeholder": "Lo que podría romperse primero (uno por línea).", "help": "Anótalos antes de empezar.", "section": "Estilo & stack", "options": null}, {"key": "feature", "label": "Feature / módulo actual (opcional)", "type": "textarea", "placeholder": "Lo que estás desarrollando AHORA. Si lo llenas, rellena los prompts de cada fase.", "help": "Opcional. Personaliza los prompts de fase.", "section": "Estilo & stack", "options": null}], "defaults": {"stack": "Next.js 14 (App Router) + Supabase + TypeScript + Tailwind + Vercel", "platform": "ambas", "userLevel": "medio", "clientOrPersonal": "Para cliente"}, "agents": [{"id": "cto", "emoji": "🏛️", "name": "CTOAgent", "level": "Nivel 1", "group": "Arquitectos", "color": "#e8ff47", "tagline": "Arquitectura general, escalabilidad, roadmap técnico, deuda técnica, revisión de decisiones de alto nivel.", "restrictions": [["x", "No programa"], ["x", "No toca BD directamente"], ["check", "Diseño técnico"], ["check", "Análisis de riesgos"]], "prompt": "Actúa como CTO senior con experiencia en SaaS B2B y startups de 1–20 personas.\n\nTu rol:\n- Analizar impacto técnico de funcionalidades nuevas\n- Detectar riesgos de arquitectura antes de que se programen\n- Proponer soluciones de diseño sin escribir código\n- Evaluar decisiones de stack y estructura\n\nProyecto: [NOMBRE_PROYECTO]\nStack actual: [STACK]\nContexto: [DESCRIPCIÓN_DEL_PROBLEMA_O_FEATURE]\n\nAnaliza:\n1. Impacto en arquitectura existente\n2. Riesgos de seguridad\n3. Implicancias de rendimiento a escala\n4. Deuda técnica que genera\n5. Alternativas de diseño (mínimo 2)\n\nFormato de respuesta:\n- Diseño técnico recomendado (diagramático si ayuda)\n- Lista de riesgos priorizados (alto / medio / bajo)\n- Decisiones que debo tomar antes de programar\n- Lo que NO haría y por qué\n\nRESTRICCIÓN: No escribas código. No sugieras librerías específicas sin justificación. No des respuestas genéricas.", "output": ["Diseño técnico de alto nivel (no código)", "Lista de riesgos con prioridad", "Decisiones de arquitectura pendientes", "Anti-patrones a evitar en este contexto", "Estimación de complejidad de implementación"]}, {"id": "ux", "emoji": "🎨", "name": "UXUIAgent", "level": "Nivel 1", "group": "Arquitectos", "color": "#06b6d4", "tagline": "Flujos de usuario, wireframes textuales, experiencia móvil, diseño de dashboards y formularios.", "restrictions": [["x", "No programa"], ["x", "No define BD"], ["check", "Flujos y wireframes"], ["check", "Decisiones de UX"]], "prompt": "Actúa como UX/UI designer especialista en aplicaciones de gestión empresarial y herramientas SaaS B2B.\n\nTu enfoque:\n- Simplicidad radical: si puede hacerse en una pantalla, no uses dos\n- Diseño orientado a la acción principal del usuario\n- Considera usuarios con bajo nivel técnico\n- Prioriza mobile cuando aplique\n\nProyecto: [NOMBRE_PROYECTO]\nUsuario principal: [DESCRIPCIÓN_USUARIO] (nivel técnico: [NIVEL])\nAcción más frecuente: [ACCIÓN_PRINCIPAL]\nPlataforma: [mobile / desktop / ambas]\nPantallas existentes: [LISTA o \"ninguna\"]\n\nDiseña:\n1. Mapa de navegación para MVP (máx 6 pantallas)\n2. Wireframe textual de las 2 pantallas más importantes\n3. Happy path completo paso a paso\n4. Estados críticos por pantalla: vacío / cargando / error / éxito\n5. 3 decisiones de UX que más impactan la adopción\n\nRESTRICCIÓN: No programes. No sugieras librerías de UI. No diseñes para v2.", "output": ["Mapa de pantallas del MVP", "Wireframes textuales (layout + componentes clave)", "Happy path numerado", "Estados por pantalla (vacío, carga, error)", "Decisiones de UX justificadas"]}, {"id": "data", "emoji": "🗄️", "name": "DataArchitectAgent", "level": "Nivel 1", "group": "Arquitectos", "color": "#22c55e", "tagline": "PostgreSQL, Supabase, migraciones, índices, políticas RLS. Define cómo viven los datos.", "restrictions": [["x", "No toca React"], ["x", "No define rutas Next.js"], ["check", "SQL puro"], ["check", "RLS y permisos"]], "prompt": "Actúa como Data Architect especialista en PostgreSQL y Supabase para aplicaciones SaaS.\n\nPrincipios que sigues:\n- Normalización adecuada al tamaño del proyecto\n- RLS desde el inicio, nunca como afterthought\n- Índices solo donde hay consultas reales, no preventivos\n- Nombres en snake_case consistente\n- Migraciones atómicas y reversibles\n\nProyecto: [NOMBRE_PROYECTO]\nEntidades identificadas: [LISTA_ENTIDADES]\nRoles de usuario: [ROL_1, ROL_2, ...]\nConsultas más frecuentes: [DESCRIPCIÓN]\nVolumen esperado: [filas estimadas por tabla / año]\n\nEntrega:\n1. Schema SQL completo con tipos correctos y constraints\n2. Relaciones (FK con ON DELETE apropiado)\n3. Índices justificados (solo los necesarios)\n4. Políticas RLS por tabla y por rol (SELECT / INSERT / UPDATE / DELETE)\n5. Orden correcto de migraciones\n6. Datos seed de ejemplo (5–10 filas por tabla principal)\n\nRESTRICCIÓN: No toques componentes React. No definas API routes. Solo SQL y configuración Supabase.", "output": ["Schema SQL listo para ejecutar en Supabase", "Políticas RLS completas por tabla", "Índices con justificación", "Script de migraciones en orden", "Datos de prueba seed"]}, {"id": "front", "emoji": "⚛️", "name": "FrontendAgent", "level": "Nivel 2", "group": "Constructores", "color": "#a855f7", "tagline": "Next.js, React, Tailwind, Shadcn. Construye interfaces y componentes. Solo consume datos, no los define.", "restrictions": [["x", "No modifica BD"], ["x", "No crea API routes"], ["check", "Componentes React"], ["check", "Tailwind"]], "prompt": "Actúa como Frontend Engineer especialista en Next.js 14, React, TypeScript y Tailwind CSS.\n\nStack del proyecto:\n- Framework: Next.js 14 (App Router)\n- Estilos: Tailwind CSS\n- Componentes: [Shadcn/ui / custom]\n- TypeScript estricto\n- Colores del sistema: [COLOR_PRIMARIO] / [COLOR_SECUNDARIO]\n\nReglas de este proyecto:\n- Imports de Supabase solo desde `@/lib/supabase-client.ts` (cliente) o `@/lib/supabase-server.ts` (servidor)\n- Params de rutas dinámicas son async en Next.js 14+\n- No usar `window.location.href`, usar `router.push()` o `window.location.assign()`\n- Componentes en PascalCase, hooks en camelCase con prefijo `use`\n- Estados de carga y error siempre presentes en operaciones async\n\nTarea: [DESCRIPCIÓN_DEL_COMPONENTE_O_PANTALLA]\nDatos disponibles: [ESTRUCTURA_DE_DATOS_QUE_RECIBIRÁ]\nComportamiento esperado: [QUÉ_HACE_EL_USUARIO]\n\nEntrega:\n1. Componente completo con TypeScript\n2. Estados: loading / error / empty / success\n3. Responsive (mobile-first si aplica)\n4. Sin lógica de negocio en el componente (solo presentación y UX)\n\nRESTRICCIÓN: No modifiques esquema de BD. No crees API routes. No uses fetch directo a Supabase desde client components sin pasar por el cliente configurado.", "output": ["Componente React + TypeScript completo", "Manejo de todos los estados visuales", "Props tipadas con interfaces", "Responsive por defecto"]}, {"id": "back", "emoji": "🔌", "name": "BackendAgent", "level": "Nivel 2", "group": "Constructores", "color": "#ff6b35", "tagline": "API Routes, Edge Functions, lógica de negocio en servidor. Nunca toca la interfaz.", "restrictions": [["x", "No modifica UI"], ["x", "No toca CSS/Tailwind"], ["check", "API routes"], ["check", "Server actions"]], "prompt": "Actúa como Backend Engineer especialista en Next.js API Routes, Server Actions, Supabase y TypeScript.\n\nStack del proyecto:\n- Next.js 14 App Router\n- Supabase (PostgreSQL + Auth + Storage)\n- TypeScript estricto\n- Despliegue en Vercel (Edge cuando sea posible)\n\nReglas de este proyecto:\n- Usar `createServerSupabase()` para operaciones server-side\n- Usar `createAdminSupabase()` solo cuando se necesitan permisos admin\n- Validar inputs siempre antes de consultar BD\n- Retornar errores tipados, nunca strings genéricos\n- No exponer IDs internos ni datos sensibles en responses\n- Rate limiting en endpoints públicos\n\nTarea: [DESCRIPCIÓN_DEL_ENDPOINT_O_ACTION]\nTablas involucradas: [LISTA_DE_TABLAS]\nLógica de negocio: [REGLAS_ESPECÍFICAS]\nAutenticación requerida: [sí / no / rol específico]\n\nEntrega:\n1. API Route o Server Action completa con TypeScript\n2. Validación de inputs\n3. Manejo de errores con códigos apropiados\n4. Comentarios en lógica de negocio compleja\n\nRESTRICCIÓN: No modifiques componentes React. No definas schema de BD. No pongas lógica de presentación aquí.", "output": ["API Route o Server Action con TypeScript", "Validación completa de inputs", "Errores tipados y descriptivos", "Lógica de negocio comentada"]}, {"id": "full", "emoji": "🧱", "name": "FullStackAgent", "level": "Nivel 2", "group": "Constructores", "color": "#64748b", "tagline": "Solo para prototipos, MVPs rápidos y tareas pequeñas. No para módulos completos en producción.", "restrictions": [["x", "No para módulos completos"], ["x", "No en producción crítica"], ["check", "Prototipos"], ["check", "Tareas aisladas"]], "prompt": "Actúa como Full Stack Developer pragmático.\n\nEste es un [PROTOTIPO / FEATURE PEQUEÑO / TAREA AISLADA], no un módulo completo.\n\nStack: Next.js 14 + Supabase + TypeScript + Tailwind\nAlcance: [DESCRIPCIÓN_EXACTA_Y_ACOTADA]\nTiempo objetivo: [30 min / 1 hora / medio día]\n\nRestricciones de scope:\n- Solo lo que se describe, nada más\n- Sin abstracciones prematuras\n- Sin optimizaciones que no se necesitan hoy\n- Código que funciona > código perfecto\n\nEntrega el código completo listo para usar.\nSi hay decisiones de arquitectura que afectarán el proyecto a largo plazo, márcalas con // TODO: revisar con CTOAgent\n\nADVERTENCIA INTERNA: Si esto parece ser un módulo completo o una feature con múltiples entidades, detente y sugiere usar el flujo CTOAgent → DataArchitectAgent → BackendAgent → FrontendAgent en cambio.", "output": ["Código funcional y directo", "Comentarios TODO donde hay deuda técnica", "Sin over-engineering"]}, {"id": "domain", "emoji": "📦", "name": "DomainBot (plantilla)", "level": "Nivel 3", "group": "Especialistas de Negocio", "color": "#34d399", "tagline": "Especialista en el dominio del proyecto. Valida que la lógica sea correcta según las reglas del negocio real.", "restrictions": [["x", "No programa"], ["x", "No define arquitectura"], ["check", "Validación de dominio"], ["check", "Casos edge del negocio"]], "prompt": "Actúa como especialista senior en [DOMINIO_DEL_NEGOCIO].\n\nTu experiencia incluye:\n- [CONOCIMIENTO_ESPECÍFICO_1]\n- [CONOCIMIENTO_ESPECÍFICO_2]\n- [NORMATIVA_O_REGULACIÓN_APLICABLE]\n\nProyecto: [NOMBRE]\nMódulo a validar: [DESCRIPCIÓN]\nLógica implementada: [RESUMEN_DE_LO_QUE_HACE_EL_CÓDIGO]\n\nAnaliza:\n1. ¿La lógica es correcta según las reglas del negocio real?\n2. ¿Qué casos edge del dominio no estamos cubriendo?\n3. ¿Hay validaciones críticas faltantes?\n4. ¿Hay algo que parece correcto técnicamente pero es incorrecto para el negocio?\n\nRESTRICCIÓN: No programes. Entrega análisis de negocio, no análisis técnico.", "output": ["Validación de la lógica contra reglas reales", "Casos edge del dominio no cubiertos", "Validaciones críticas faltantes", "Lo correcto técnicamente pero incorrecto para el negocio"]}, {"id": "qa", "emoji": "🔍", "name": "QAAgent", "level": "Nivel 4", "group": "Auditores", "color": "#f59e0b", "tagline": "Encuentra bugs, edge cases, validaciones faltantes, problemas de UX. No programa correcciones.", "restrictions": [["x", "No programa"], ["check", "Lista de issues"], ["check", "Priorización"]], "prompt": "Actúa como QA Senior con experiencia en aplicaciones SaaS B2B y herramientas de gestión empresarial.\n\nTu metodología:\n- Revisar happy path + todos los caminos alternativos\n- Buscar estados inconsistentes entre UI y datos\n- Evaluar experiencia de usuario bajo condiciones reales (conexión lenta, datos faltantes, errores de red)\n- Identificar validaciones faltantes en formularios\n- Detectar estados de carga y error no manejados\n\nCódigo/módulo a revisar: [CÓDIGO_O_DESCRIPCIÓN]\nContexto del usuario final: [QUIÉN_USA_ESTO, CÓMO]\nStack: Next.js + Supabase + TypeScript\n\nBusca y reporta:\n1. Bugs evidentes (orden: críticos → altos → medios → bajos)\n2. Edge cases no manejados\n3. Validaciones de inputs faltantes\n4. Problemas de UX que van a confundir al usuario real\n5. Estados imposibles o inconsistentes\n6. Comportamiento con datos vacíos / null / undefined\n7. Comportamiento con conexión lenta o falla de red\n\nFormato: lista priorizada con descripción, impacto y cómo reproducir.\n\nRESTRICCIÓN: No programes las correcciones. Solo reporta.", "output": ["Lista de bugs por prioridad (crítico → bajo)", "Edge cases específicos con pasos para reproducir", "Problemas de UX con impacto en usuario real", "Validaciones faltantes identificadas"]}, {"id": "sec", "emoji": "🔒", "name": "SecurityAgent", "level": "Nivel 4", "group": "Auditores", "color": "#ef4444", "tagline": "Audita RLS, JWT, APIs, permisos. Busca vulnerabilidades antes de que lleguen a producción.", "restrictions": [["x", "No programa"], ["check", "Auditoría de seguridad"], ["check", "Vulnerabilidades priorizadas"]], "prompt": "Actúa como Security Auditor especialista en aplicaciones Next.js + Supabase.\n\nTu enfoque:\n- Supabase: RLS, service role key exposure, anon key scope\n- Auth: JWT handling, session management, refresh tokens\n- APIs: authorization checks, input validation, rate limiting\n- Frontend: datos sensibles expuestos al cliente, localStorage con info sensible\n- Infraestructura: env vars, secrets en código, CORS\n\nContexto del proyecto:\n- Stack: Next.js 14 + Supabase + Vercel\n- Roles de usuario: [ROLES]\n- Datos sensibles que maneja: [DATOS_SENSIBLES]\n\nMaterial a auditar: [CÓDIGO / SCHEMA_RLS / DESCRIPCIÓN_DE_APIS]\n\nBusca:\n1. Políticas RLS con agujeros (datos accesibles sin autorización)\n2. APIs sin verificación de autenticación o autorización\n3. Service role key usada donde debería usarse anon key y viceversa\n4. Variables de entorno hardcodeadas o expuestas al cliente\n5. Datos sensibles en responses que no deberían estar\n6. Posibles ataques: SQL injection (aunque Supabase ayuda), XSS, CSRF\n7. Escalación de privilegios posible\n\nFormato: lista de vulnerabilidades con severidad (crítica / alta / media / baja) y vector de ataque.\n\nRESTRICCIÓN: No programes las correcciones. Solo audita y reporta.", "output": ["Vulnerabilidades por severidad (crítica → baja)", "Vector de ataque específico para cada issue", "Datos expuestos que no deberían estarlo", "RLS policies con agujeros identificados"]}, {"id": "perf", "emoji": "⚡", "name": "PerformanceAgent", "level": "Nivel 4", "group": "Auditores", "color": "#0ea5e9", "tagline": "Detecta queries lentas, renders innecesarios, problemas de caché y cuellos de botella de escalabilidad.", "restrictions": [["x", "No programa"], ["check", "Análisis de rendimiento"], ["check", "Bottlenecks priorizados"]], "prompt": "Actúa como Performance Engineer especialista en Next.js y Supabase/PostgreSQL.\n\nÁreas de análisis:\n- PostgreSQL: queries N+1, índices faltantes, joins costosos, full table scans\n- Next.js: re-renders innecesarios, waterfalls de datos, bundle size, SSR vs CSR vs ISR\n- Supabase: connection pooling, realtime subscriptions costosas, RLS impact en queries\n- Vercel: cold starts, Edge vs Serverless functions, caché de respuestas\n\nContexto:\n- Volumen actual: [FILAS_POR_TABLA / USUARIOS_ACTIVOS]\n- Volumen esperado a 12 meses: [PROYECCIÓN]\n- Punto de dolor actual: [DESCRIBE_QUÉ_ESTÁ_LENTO_O_QUÉ_PREOCUPA]\n\nMaterial a analizar: [CÓDIGO / QUERIES / DESCRIPCIÓN_DEL_FLUJO]\n\nBusca:\n1. Queries que van a explotar con escala (N+1, full scans)\n2. Componentes React que re-renderizan sin necesidad\n3. Datos que se fetchen múltiples veces pudiendo cachearse\n4. Waterfalls de requests que podrían ser paralelos\n5. Índices PostgreSQL faltantes para los patrones de consulta\n6. Oportunidades de ISR o caché de respuestas API\n\nFormato: lista priorizada por impacto potencial, con estimación de mejora.\n\nRESTRICCIÓN: No programes las correcciones. Solo analiza e identifica.", "output": ["Bottlenecks por impacto potencial", "Queries problemáticas identificadas", "Patrones de re-render innecesarios", "Oportunidades de caché no aprovechadas"]}, {"id": "orchestrator", "emoji": "🎯", "name": "OrchestratorAgent", "level": "Master", "group": "Coordinador", "color": "#fbbf24", "tagline": "Coordina CTOAgent → UXUIAgent → DataArchitectAgent → BackendAgent → FrontendAgent → QAAgent. Genera el plan fase por fase. No programes hasta que apruebe el diseño.", "restrictions": [["check", "Orquesta la jerarquía"], ["check", "Plan fase por fase"], ["x", "No programa hasta diseño aprobado"]], "prompt": "Eres el coordinador de un equipo de agentes de desarrollo de software.\n\nTu función es orquestar la siguiente jerarquía en orden:\n1. CTOAgent → analiza arquitectura e impacto\n2. UXUIAgent → diseña flujos y wireframes\n3. DataArchitectAgent → diseña schema y RLS\n4. BackendAgent → implementa lógica de servidor\n5. FrontendAgent → implementa interfaz\n6. QAAgent → audita bugs y edge cases\n7. SecurityAgent → audita vulnerabilidades (si involucra datos sensibles)\n\nProyecto: [NOMBRE_PROYECTO]\nStack: [STACK]\nMódulo nuevo a desarrollar: [DESCRIPCIÓN_COMPLETA]\nContexto de negocio: [REGLAS_Y_RESTRICCIONES_DEL_DOMINIO]\n\nProceso:\n1. Invoca CTOAgent primero. Presenta su análisis.\n2. DETENTE y pregunta: \"¿Apruebas este diseño o hay cambios?\"\n3. Solo al recibir aprobación, continúa con UXUIAgent.\n4. Repite el proceso de aprobación en cada etapa.\n5. No generes código hasta que CTOAgent y DataArchitectAgent estén aprobados.\n\nAl final de cada etapa, indica:\n- Qué se decidió\n- Qué suposiciones se hicieron\n- Qué necesita aprobación antes de continuar\n\nREGLA CRÍTICA: Si detectas que el módulo es más complejo de lo anticipado, para y comunícalo antes de continuar. No avances con incertidumbre.", "output": ["Plan completo por fases", "Aprobación explícita en cada gate", "Contexto acumulado entre agentes", "Decisiones y suposiciones registradas"]}], "orchVariants": {"Versión rápida": "Orquesta el desarrollo de: [DESCRIPCIÓN_DEL_FEATURE]\n\nProyecto: [NOMBRE] / Stack: Next.js + Supabase + TypeScript\n\nSecuencia rápida:\n1. CTOAgent: ¿hay riesgos de arquitectura? (2 párrafos máx)\n2. DataArchitectAgent: ¿cambios en BD? ¿migraciones necesarias?\n3. BackendAgent: implementa el endpoint/action\n4. FrontendAgent: implementa el componente\n5. QAAgent: 5 casos a probar\n\nNo pidas aprobación en cada paso. Avanza directo pero marca con ⚠️ cualquier decisión importante que deba revisar.", "Por sprint": "Actúa como coordinador de sprint.\n\nProyecto: [NOMBRE]\nSprint: [NÚMERO]\nObjetivo del sprint: [QUÉ_SE_CONSTRUYE]\nTiempo disponible: [HORAS_O_DÍAS]\n\nGenera:\n1. Breakdown de tareas por agente (con dependencias)\n2. Orden de ejecución (qué se hace primero)\n3. Criterios de aceptación por tarea\n4. Riesgos del sprint y cómo mitigarlos\n5. Definición de \"done\" para este sprint\n\nFormato: tabla con columnas Agente | Tarea | Dependencias | Tiempo estimado | Criterio de aceptación\n\nNo incluyas tareas de v2. Solo lo que entra en este sprint."}, "masterPrompt": "Actúa como CTOAgent.\n\nAnaliza esta funcionalidad: [DESCRIBE LA FUNCIONALIDAD]\n\nNo programes todavía.\n\nGenera:\n\n1. Arquitectura\n   — Componentes del sistema\n   — Flujos de datos\n   — Dependencias con el sistema existente\n\n2. Riesgos\n   — Técnicos\n   — De producto\n   — De escalabilidad\n\n3. Diseño de BD requerido\n   — Tablas necesarias\n   — Relaciones clave\n   — Consideraciones de RLS\n\n4. UX requerida\n   — Pantallas necesarias\n   — Flujos de usuario\n   — Estados críticos\n\n5. Plan de implementación\n   — Fase 1: DataArchitectAgent → diseño de BD\n   — Fase 2: UXUIAgent → wireframes y flujos\n   — Fase 3: BackendAgent → APIs y migraciones\n   — Fase 4: FrontendAgent → componentes y páginas\n   — Fase 5: QAAgent → auditoría de bugs\n   — Fase 6: SecurityAgent → revisión de permisos y RLS\n\nCoordina los agentes necesarios.\nEntrega el trabajo por fases.\nNo empieces a programar hasta que apruebe el diseño.", "pipeline": [["01", "Pensar", "CTOAgent", "No programar", "cto"], ["02", "Datos", "DataArchitectAgent", "Todavía sin código", "data"], ["03", "UX", "UXUIAgent", "Diseño antes de código", "ux"], ["04a", "Backend", "BackendAgent", "Primero", "back"], ["04b", "Frontend", "FrontendAgent", "Después del backend", "front"], ["05", "Auditoría QA", "QAAgent", "Buscar, no reparar", "qa"], ["06", "Seguridad", "SecurityAgent", "Siempre antes de deploy", "sec"], ["07", "Rendimiento", "PerformanceAgent", "Solo si hay escala real", "perf"]], "principles": [["Diseño antes que código", "El costo de cambiar un diseño es cero. El costo de reescribir código mal diseñado es enorme. La aprobación explícita es el gate de calidad."], ["Especialización real", "Un agente enfocado en seguridad piensa en seguridad. Uno enfocado en BD piensa en índices. La mezcla de roles produce soluciones mediocres."], ["Orden importa", "BD primero, luego APIs, luego UI. Construir el frontend sobre APIs inexistentes produce deuda técnica inmediata y mocks que nunca se reemplazan."], ["Auditoría separada", "El agente que construye no es el que audita. QA y Security como fases independientes producen revisiones más honestas."]], "goldenRules": [["x", "Nunca programar sin diseño aprobado", "Si el CTOAgent entrega una arquitectura y el usuario no la aprueba explícitamente, ningún otro agente debe producir código. Es la regla más importante del framework."], ["x", "Nunca mezclar roles en un prompt", "Pedirle al BackendAgent que también diseñe la UX produce peores resultados en ambas dimensiones. Un prompt, un rol, un output específico."], ["x", "No saltarse QA y Security antes de deploy", "Son los únicos pasos no negociables. El costo de un bug de seguridad en producción supera cualquier ahorro de tiempo."], ["check", "Pasar el output entre agentes", "El output del CTOAgent va al DataArchitectAgent. El de Data va al Backend. El contexto acumulado entre fases produce coherencia en el sistema final."]], "skipRules": [["Fix rápido (\u003c30 min)", "Saltar todo, ir directo al agente correcto con contexto mínimo."], ["Exploración / prototipo", "Solo CTOAgent + FullStackAgent para validar la idea rápido."], ["Feature nuevo en sistema grande", "El flujo completo siempre, sin atajos."], ["Bug de producción", "QAAgent → SecurityAgent → fix directo, sin pasar por diseño."]], "kickoff": [["07:00–08:00", "00", "Contexto y claridad", "PENSAR", [["// antes de abrir el editor", ["Escribe el problema en una frase", "Define quién lo usará y con qué frecuencia", "Escribe el resultado mínimo que da valor (MVP real)", "Identifica proyectos existentes similares (¿reusar stack?)"]], ["// decisiones que bloquean después", ["¿Es para cliente o para ti?", "¿Stack fijo o nuevo? (Next.js + Supabase por defecto)", "¿Tiene fecha de entrega real?", "Anota 3 riesgos técnicos antes de empezar"]]]], ["08:00–09:30", "01", "Arquitectura y datos", "PENSAR", [["// diseño antes de código", ["Dibuja las entidades principales (5 o menos)", "Define relaciones entre tablas", "Decide columnas del MVP (no del v2)", "Anota las políticas RLS que necesitarás"]], ["// estructura del proyecto", ["Define estructura de carpetas antes de crear archivos", "Decide naming conventions y anótalo en CLAUDE.md desde el día 1", "Define dónde va la lógica de negocio", "Si necesitas auth, define el modelo desde ya"]]]], ["09:30–10:00", "02", "UX y flujos", "PENSAR", [["// flujos del usuario", ["Dibuja el happy path principal", "¿Cuántas pantallas necesita el MVP? (menos de 5)", "Anota estados de carga, vacío y error por vista"]], ["// decisiones de interfaz", ["¿Mobile-first o desktop-first?", "Paleta de colores y tipografía (2 colores MVP)", "¿Shadcn o componentes custom?"]]]], ["10:00–13:00", "03", "Construcción — Bloque 1", "CONSTRUIR", [["// setup inicial (10:00–11:00)", ["Crear repo GitHub + rama main protegida", "Inicializar proyecto con stack decidido", "Crear proyecto en Supabase + variables .env (NUNCA commitear .env)", "Primer commit: feat: project init", "Deploy a Vercel (URL real desde el día 1)"]], ["// base técnica (11:00–13:00)", ["Ejecutar migraciones SQL en Supabase", "Configurar cliente Supabase (server + client)", "Crear layout base + navegación principal", "Crear CLAUDE.md con stack + reglas del proyecto"]]]], ["14:00–17:00", "04", "Construcción — Bloque 2", "CONSTRUIR", [["// módulos de negocio (14:00–16:00)", ["Construir happy path completo end-to-end", "Estados de carga en todas las acciones async", "Manejo de errores básico (no silencioso)", "Estados vacíos con CTAs claros"]], ["// refinamiento (16:00–17:00)", ["Probar el happy path manualmente", "Commit por módulo completado (no 'wip')", "Deploy y verificar en Vercel", "Anotar deuda técnica en CLAUDE.md"]]]], ["17:00–18:30", "05", "Auditoría y cierre", "REVISAR", [["// auditoría (17:00–18:00)", ["QAAgent: revisar bugs y edge cases", "SecurityAgent: revisar RLS y exposición de datos", "Verificar que .env no está en el repo", "Probar en mobile (si aplica)"]], ["// cierre del día (18:00–18:30)", ["Actualizar CHANGELOG.md con lo construido hoy", "Escribir 3 tareas para mañana (no más)", "Commit final: chore: end of day", "¿Se puede mostrar algo a alguien hoy?"]]]], ["18:30+", "06", "Ship o mañana", "LANZAR", [["// criterio de ship day 1", ["¿El happy path funciona de punta a punta?", "¿No hay claves API en el código?", "¿El deploy está verde?", "¿Hay alguien que pueda probarlo hoy?"]], ["// si no ships, cuándo", ["Define fecha concreta de primer usuario real (sin fecha = nunca)", "Recorta scope si la fecha no es esta semana", "Agenda demo aunque no esté listo (las demos fuerzan el ship)"]]]]], "tokens": [{"token": "PROJECT_NAME", "field": "projectName", "hint": "nombre-del-proyecto", "isList": false}, {"token": "SLUG", "field": null, "hint": "nombre-del-proyecto", "isList": false}, {"token": "DATE", "field": null, "hint": "AAAA-MM-DD", "isList": false}, {"token": "PROBLEM", "field": "problem", "hint": "una frase — el dolor que resuelves", "isList": false}, {"token": "MVP", "field": "mvp", "hint": "resultado mínimo que ya entrega valor", "isList": false}, {"token": "CLIENT_OR_PERSONAL", "field": "clientOrPersonal", "hint": "cliente / personal / interno", "isList": false}, {"token": "DEADLINE", "field": "deadline", "hint": "fecha concreta (sin fecha = nunca)", "isList": false}, {"token": "USER", "field": "user", "hint": "quién lo usa y en qué contexto", "isList": false}, {"token": "USER_LEVEL", "field": "userLevel", "hint": "bajo / medio / alto", "isList": false}, {"token": "FREQUENCY", "field": "frequency", "hint": "cada cuánto vuelve el usuario", "isList": false}, {"token": "MAIN_ACTION", "field": "mainAction", "hint": "la acción del 80% de las visitas", "isList": false}, {"token": "PLATFORM", "field": "platform", "hint": "mobile / desktop / ambas", "isList": false}, {"token": "ENTITIES", "field": "entities", "hint": "usuarios, proyectos, …", "isList": true}, {"token": "ROLES", "field": "roles", "hint": "admin, operador, …", "isList": true}, {"token": "SENSITIVE_DATA", "field": "sensitiveData", "hint": "RUT, datos financieros, …", "isList": false}, {"token": "VOLUME", "field": "volume", "hint": "filas/usuarios estimados", "isList": false}, {"token": "VOLUME_PROJECTION", "field": "volumeProjection", "hint": "proyección a 12 meses", "isList": false}, {"token": "DOMAIN", "field": "domain", "hint": "el dominio del negocio", "isList": false}, {"token": "DOMAIN_KNOWLEDGE", "field": "domainKnowledge", "hint": "reglas / normativa del dominio", "isList": true}, {"token": "STACK", "field": "stack", "hint": "Next.js 14 + Supabase + TypeScript + Tailwind + Vercel", "isList": false}, {"token": "COLOR_PRIMARY", "field": "colorPrimary", "hint": "#primario", "isList": false}, {"token": "COLOR_SECONDARY", "field": "colorSecondary", "hint": "#secundario", "isList": false}, {"token": "RISKS", "field": "risks", "hint": "lo que podría romperse primero", "isList": true}, {"token": "FEATURE", "field": "feature", "hint": "el módulo que desarrollas ahora", "isList": false}], "agentReplacements": {"[NOMBRE_PROYECTO]": "PROJECT_NAME", "[NOMBRE]": "PROJECT_NAME", "[STACK]": "STACK", "[DESCRIPCIÓN_USUARIO]": "USER", "[NIVEL]": "USER_LEVEL", "[ACCIÓN_PRINCIPAL]": "MAIN_ACTION", "[mobile / desktop / ambas]": "PLATFORM", "[LISTA_ENTIDADES]": "ENTITIES", "[ROL_1, ROL_2, ...]": "ROLES", "[ROLES]": "ROLES", "[COLOR_PRIMARIO]": "COLOR_PRIMARY", "[COLOR_SECUNDARIO]": "COLOR_SECONDARY", "[DOMINIO_DEL_NEGOCIO]": "DOMAIN", "[DATOS_SENSIBLES]": "SENSITIVE_DATA", "[PROYECCIÓN]": "VOLUME_PROJECTION", "[FILAS_POR_TABLA / USUARIOS_ACTIVOS]": "VOLUME", "[filas estimadas por tabla / año]": "VOLUME", "[DESCRIPCIÓN_DEL_PROBLEMA_O_FEATURE]": "FEATURE", "[DESCRIPCIÓN_COMPLETA]": "FEATURE", "[DESCRIPCIÓN_DEL_FEATURE]": "FEATURE", "[DESCRIBE LA FUNCIONALIDAD]": "FEATURE"}, "docs": [{"path": "CLAUDE.md", "title": "Manual operativo (IA)", "template": "# CLAUDE.md — {{PROJECT_NAME}}\n\n> Manual operativo del proyecto para agentes de IA. Léelo antes de tocar nada.\n> Regla #1 del framework: **no se programa sin diseño aprobado.**\n\n## Qué es esto\n- **Problema:** {{PROBLEM}}\n- **MVP:** {{MVP}}\n- **Para:** {{CLIENT_OR_PERSONAL}} · **Entrega:** {{DEADLINE}}\n- **Usuario:** {{USER}} (nivel técnico: {{USER_LEVEL}}, frecuencia: {{FREQUENCY}})\n- **Acción principal:** {{MAIN_ACTION}}\n- **Plataforma:** {{PLATFORM}}\n\n## Stack\n{{STACK}}\n\n## Reglas del proyecto (no negociables)\n- Imports de Supabase solo desde `@/lib/supabase-client.ts` (cliente) o `@/lib/supabase-server.ts` (servidor).\n- En servidor usar `createServerSupabase()`; `createAdminSupabase()` solo cuando se necesitan permisos admin.\n- Params de rutas dinámicas son **async** en Next.js 14+.\n- No usar `window.location.href`; usar `router.push()` o `window.location.assign()`.\n- Naming: **snake_case** en BD, **camelCase** en TS, **PascalCase** en componentes, hooks con prefijo `use`.\n- Validar inputs **siempre** antes de consultar la BD. Errores **tipados**, nunca strings genéricos.\n- RLS desde el inicio, nunca como afterthought. Nada de `SELECT *` sin filtro de usuario.\n- Estados `loading / error / empty / success` presentes en **toda** operación async.\n- `.env` **nunca** se commitea. Sin keys en el código ni expuestas al cliente.\n- Colores del sistema: {{COLOR_PRIMARY}} / {{COLOR_SECONDARY}}.\n\n## Dónde vive cada cosa\n- **Datos / SQL / RLS** → DataArchitectAgent. (`docs/design/02-DATA-MODEL.md`)\n- **Lógica de negocio / APIs** → BackendAgent (server). (`docs/design/04-API-SPEC.md`)\n- **Presentación / componentes** → FrontendAgent (sin lógica de negocio). (`docs/design/03-UX-FLOWS.md`)\n- **Reglas del dominio** → {{DOMAIN}} (DomainBot).\n\n## El equipo de agentes\nPensar → Datos → UX → Backend → Frontend → QA → Security → Performance.\nUn prompt, un rol, un output. El output de un agente alimenta al siguiente.\nPrompts en `docs/design/agents/`. Orquestación en `docs/design/agents/MASTER-PROMPT.md`.\n\n## Reglas de oro\n1. Nunca programar sin diseño aprobado.\n2. Nunca mezclar roles en un prompt.\n3. No saltarse QA y Security antes de deploy.\n4. Pasar el output entre agentes (contexto acumulado).\n\n## Deuda técnica\n_(Anota aquí lo que dejas pendiente. Marca en código con `// TODO: revisar con CTOAgent`.)_\n"}, {"path": "README.md", "title": "Readme", "template": "# {{PROJECT_NAME}}\n\n{{PROBLEM}}\n\n**MVP:** {{MVP}}\n\n## Stack\n{{STACK}}\n\n## Estado\n- [ ] Diseño aprobado (CTOAgent + DataArchitectAgent)\n- [ ] BD + RLS\n- [ ] Backend\n- [ ] Frontend\n- [ ] QA\n- [ ] Security\n- [ ] Deploy\n\n## Cómo empezar\n1. `cp .env.example .env` y completa las variables de Supabase. **Nunca** commitees `.env`.\n2. Instala dependencias y levanta el dev server.\n3. Ejecuta las migraciones en Supabase (ver `docs/design/02-DATA-MODEL.md`).\n\n## Documentación de diseño\nTodo el diseño vive en `docs/design/`. Empieza por `CLAUDE.md`.\n"}, {"path": "docs/design/00-CONTEXT.md", "title": "Contexto", "template": "# 00 · Contexto y claridad — {{PROJECT_NAME}}\n\n**Fase:** Pensar · **Agente:** CTOAgent · **Regla:** no programar todavía.\n\n## El problema en una frase\n{{PROBLEM}}\n\n## Usuario\n- Quién: {{USER}}\n- Nivel técnico: {{USER_LEVEL}}\n- Frecuencia: {{FREQUENCY}}\n- Acción más frecuente: {{MAIN_ACTION}}\n\n## MVP (resultado mínimo con valor)\n{{MVP}}\n\n## Decisiones que bloquean después\n- ¿Cliente o personal? → {{CLIENT_OR_PERSONAL}}\n- Stack → {{STACK}}\n- Fecha de entrega real → {{DEADLINE}}\n- Plataforma → {{PLATFORM}}\n\n## 3 riesgos técnicos (lo que podría romperse primero)\n{{RISKS}}\n\n## Salida del CTOAgent\n_(Pega aquí el análisis del CTOAgent: arquitectura, riesgos priorizados, decisiones de hoy.)_\n"}, {"path": "docs/design/01-ARCHITECTURE.md", "title": "Arquitectura", "template": "# 01 · Arquitectura — {{PROJECT_NAME}}\n\n**Fase:** Pensar · **Agente:** CTOAgent.\n\n## Funcionalidad analizada\n{{FEATURE}}\n\n## Arquitectura (componentes, flujos, dependencias)\n_(Diagrama textual del CTOAgent.)_\n\n## Riesgos priorizados\n| Riesgo | Tipo (técnico/producto/escala) | Severidad | Mitigación |\n|---|---|---|---|\n| | | | |\n\n## Decisiones a tomar HOY\n- \n\n## Lo que NO haría y por qué\n- \n\n## Plan de fases\n1. DataArchitectAgent → diseño de BD\n2. UXUIAgent → wireframes y flujos\n3. BackendAgent → APIs y migraciones\n4. FrontendAgent → componentes y páginas\n5. QAAgent → auditoría\n6. SecurityAgent → permisos y RLS\n"}, {"path": "docs/design/02-DATA-MODEL.md", "title": "Modelo de datos", "template": "# 02 · Modelo de datos — {{PROJECT_NAME}}\n\n**Fase:** Datos · **Agente:** DataArchitectAgent · **Regla:** sin SQL ejecutable todavía.\n\n## Entidades\n{{ENTITIES}}\n\n## Roles de usuario\n{{ROLES}}\n\n## Volumen esperado\n- Hoy: {{VOLUME}}\n- 12 meses: {{VOLUME_PROJECTION}}\n\n## Tablas\n_(nombre, campos, tipos, constraints — snake_case)_\n\n## Relaciones\n_(FK con ON DELETE, cardinalidades, patrones de join)_\n\n## Índices (solo los necesarios, con justificación)\n- \n\n## Políticas RLS por tabla y rol\n| Tabla | Rol | SELECT | INSERT | UPDATE | DELETE |\n|---|---|---|---|---|---|\n| | | | | | |\n\n## Orden de migraciones\n1. \n"}, {"path": "docs/design/03-UX-FLOWS.md", "title": "UX y flujos", "template": "# 03 · UX y flujos — {{PROJECT_NAME}}\n\n**Fase:** UX · **Agente:** UXUIAgent · **Regla:** no construir todavía.\n\n## Usuario objetivo\n{{USER}} (nivel {{USER_LEVEL}}) · plataforma {{PLATFORM}}\n\n## Acción principal\n{{MAIN_ACTION}}\n\n## Mapa de navegación (MVP — máx 6 pantallas)\n- \n\n## Wireframes textuales (2 pantallas clave)\n### Pantalla 1\n_(layout + componentes clave)_\n\n### Pantalla 2\n\n## Happy path (paso a paso)\n1. \n\n## Estados por pantalla\n| Pantalla | Vacío | Cargando | Error | Éxito |\n|---|---|---|---|---|\n| | | | | |\n\n## 3 decisiones de UX que más impactan la adopción\n- \n"}, {"path": "docs/design/04-API-SPEC.md", "title": "Backend / API", "template": "# 04 · Backend / API — {{PROJECT_NAME}}\n\n**Fase:** Backend · **Agente:** BackendAgent · **Va antes que el frontend.**\n\n## Orden de entrega\n1. Migraciones SQL (tablas, índices, RLS)\n2. Lógica y validaciones core\n3. Endpoints REST / Server Actions / Edge functions\n4. Manejo explícito de errores (no silenciar nada)\n\n## Endpoints / Actions\n| Método + ruta | Auth (rol) | Tablas | Input | Output | Errores |\n|---|---|---|---|---|---|\n| | | | | | |\n\n## Reglas de negocio\n_(Validar con DomainBot — dominio: {{DOMAIN}}.)_\n- \n"}, {"path": "docs/design/05-QA-CHECKLIST.md", "title": "Auditoría QA", "template": "# 05 · Auditoría QA — {{PROJECT_NAME}}\n\n**Fase:** QA · **Agente:** QAAgent · **Regla:** buscar, no reparar.\n\nUsuario final: {{USER}}\n\n## Issues (priorizados)\n| # | Severidad (crítico/medio/menor) | Descripción | Cómo reproducir | Sugerencia de fix |\n|---|---|---|---|---|\n| | | | | |\n\n## Checklist\n- [ ] Happy path + caminos alternativos\n- [ ] Edge cases: null, vacío, límites\n- [ ] Validaciones de inputs en formularios\n- [ ] Estados de carga y error manejados\n- [ ] Comportamiento con conexión lenta / falla de red\n- [ ] Estados imposibles o inconsistentes entre UI y datos\n"}, {"path": "docs/design/06-SECURITY.md", "title": "Seguridad", "template": "# 06 · Seguridad — {{PROJECT_NAME}}\n\n**Fase:** Security · **Agente:** SecurityAgent · **No negociable antes de deploy.**\n\nRoles: {{ROLES}}\nDatos sensibles: {{SENSITIVE_DATA}}\n\n## Vulnerabilidades (por severidad)\n| Severidad (crítica/alta/media/baja) | Vulnerabilidad | Vector de ataque | Estado |\n|---|---|---|---|\n| | | | |\n\n## Checklist de señales de alerta\n- [ ] Cada tabla sensible tiene políticas RLS activas\n- [ ] No hay `SELECT *` sin filtro de usuario\n- [ ] No hay endpoints sin verificación de sesión\n- [ ] Service key no se usa en el cliente\n- [ ] `.env` está en `.gitignore`, sin keys hardcodeadas\n- [ ] No hay escalación de privilegios posible\n- [ ] Nada sensible llega al frontend que no deba\n"}, {"path": "docs/design/07-PERFORMANCE.md", "title": "Rendimiento", "template": "# 07 · Rendimiento — {{PROJECT_NAME}}\n\n**Fase:** Performance · **Agente:** PerformanceAgent · **Solo si el feature ya es correcto.**\n\nEscala esperada: {{VOLUME_PROJECTION}}\n\n## Bottlenecks (por impacto potencial)\n| Capa (BD/servidor/cliente) | Problema | Impacto | Mejora estimada |\n|---|---|---|---|\n| | | | |\n\n## Foco\n- BD: N+1, full scans sin índice, joins costosos\n- Servidor/Edge: funciones cacheables, llamadas externas síncronas\n- Cliente: re-renders innecesarios, bundle size, datos no usados\n\n> No optimizar lo que aún no tiene usuarios.\n"}, {"path": "docs/design/DESIGN-DECISIONS.md", "title": "Decisiones de diseño", "template": "# Decisiones de diseño — {{PROJECT_NAME}}\n\n> Registro de decisiones (ADR ligero). Una entrada por decisión que costaría revertir.\n\n## YYYY-MM-DD — Título de la decisión\n- **Contexto:** \n- **Decisión:** \n- **Alternativas consideradas:** \n- **Consecuencias / deuda:** \n- **Agente que la propuso:** \n"}, {"path": "docs/design/ROADMAP.md", "title": "Roadmap", "template": "# Roadmap — {{PROJECT_NAME}}\n\n## Ahora (este sprint)\n- \n\n## Próximo\n- \n\n## Algún día (v2 — NO ahora)\n- \n"}, {"path": "CHANGELOG.md", "title": "Changelog", "template": "# Changelog — {{PROJECT_NAME}}\n\nFormato: una entrada por día de trabajo. Commit final del día: `chore: end of day — [resumen]`.\n\n## [No publicado]\n### {{DATE}}\n- \n"}], "aux": {".gitignore": "# deps\nnode_modules/\n.pnp/\n# next\n.next/\nout/\nbuild/\n# env — NUNCA commitear\n.env\n.env*.local\n# vercel / supabase\n.vercel\n.supabase/\n# os\n.DS_Store\n*.log\n", ".env.example": "# Supabase\nNEXT_PUBLIC_SUPABASE_URL=\nNEXT_PUBLIC_SUPABASE_ANON_KEY=\nSUPABASE_SERVICE_ROLE_KEY=   # solo servidor, NUNCA exponer al cliente\n"}, "example": {"stack": "Next.js 14 (App Router) + Supabase + TypeScript + Tailwind + Vercel", "platform": "ambas", "userLevel": "medio", "clientOrPersonal": "Para cliente", "projectName": "carrerasrm", "problem": "Los coordinadores de transporte registran carreras en papel y pierden trazabilidad.", "mvp": "Registrar una carrera completada y verla en una lista filtrable.", "user": "transportista chileno que usa el sistema en terreno desde el celular", "mainAction": "registrar una carrera completada", "entities": "usuarios, carreras, vehiculos, conductores, liquidaciones", "roles": "admin, coordinador, conductor", "domain": "gestión de transporte de carga y pasajeros en Chile"}};
+let project = Object.assign({}, DATA.defaults);
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const LIST = new Set(DATA.tokens.filter(t=>t.isList && t.field).map(t=>t.field));
+function slugify(s){s=(s||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+  return s.replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase()||'proyecto';}
+function listJoin(v){return v.split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean).join(', ');}
+const today = new Date().toISOString().slice(0,10);
+
+function buildTokens(){
+  const m={};
+  for(const t of DATA.tokens){
+    if(t.token==='SLUG'){m.SLUG=slugify(project.projectName);continue;}
+    if(t.token==='DATE'){m.DATE=today;continue;}
+    let v=(project[t.field]||'').toString().trim();
+    if(LIST.has(t.field)&&v)v=listJoin(v);
+    m[t.token]=v||'_(pendiente)_';
+  }
+  return m;
+}
+function tokenRaw(){const m=buildTokens(),r={};for(const k in m)r[k]=(m[k]==='_(pendiente)_')?'':m[k];return r;}
+function fillDoc(tpl){const m=buildTokens();return tpl.replace(/\{\{([A-Z_]+)\}\}/g,(_,k)=>k in m?m[k]:'{{'+k+'}}');}
+
+function fillAgentPrompt(prompt){
+  const r=tokenRaw(); let out=prompt;
+  const dk=(project.domainKnowledge||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+  if(dk[0]) out=out.split('[CONOCIMIENTO_ESPECÍFICO_1]').join(dk[0]);
+  if(dk[1]) out=out.split('[CONOCIMIENTO_ESPECÍFICO_2]').join(dk[1]);
+  if(dk.length>2) out=out.split('[NORMATIVA_O_REGULACIÓN_APLICABLE]').join(dk.slice(2).join('; '));
+  for(const ph in DATA.agentReplacements){
+    const val=r[DATA.agentReplacements[ph]];
+    if(val) out=out.split(ph).join(val);
+  }
+  return out;
+}
+function hlPlaceholders(text){return esc(text).replace(/\[[^\]\n]{1,60}\]/g,m=>'<span class="ph">'+m+'</span>');}
+
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),1600);}
+function copyText(text,btn){
+  const done=()=>{if(btn){const o=btn.textContent;btn.textContent='✓ copiado';btn.classList.add('ok');setTimeout(()=>{btn.textContent=o;btn.classList.remove('ok')},1300);}toast('Copiado al portapapeles');};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done).catch(()=>fallback(text,done));}
+  else fallback(text,done);
+}
+function fallback(text,cb){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);cb&&cb();}
+function download(blob,name){const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);}
+
+/* ---------- render: pipeline strip ---------- */
+(function(){
+  const colors={}; DATA.agents.forEach(a=>colors[a.id]=a.color);
+  const el=$('#pipe'); let h='';
+  DATA.pipeline.forEach((p,i)=>{
+    const [num,name,agent,rule,id]=p;
+    h+=`<span class="pchip"><b style="background:${colors[id]||'#888'}"></b>${num} ${name}</span>`;
+    if(i<DATA.pipeline.length-1) h+='<span class="parrow">→</span>';
+  });
+  el.innerHTML=h;
+})();
+
+/* ---------- render: form ---------- */
+function renderForm(){
+  const groups={};
+  DATA.fields.forEach(f=>{(groups[f.section]=groups[f.section]||[]).push(f);});
+  let h=''; let gi=0;
+  for(const sec in groups){
+    gi++;
+    h+=`<details class="section" ${gi<=2?'open':''}><summary><span class="idx">0${gi}</span>${sec}<span class="chev">›</span></summary><div class="fields">`;
+    groups[sec].forEach(f=>{
+      const val=esc(project[f.key]||'');
+      h+=`<div class="field"><label for="f_${f.key}">${f.label}</label>`;
+      if(f.type==='textarea'){
+        h+=`<textarea id="f_${f.key}" data-k="${f.key}" placeholder="${esc(f.placeholder)}">${val}</textarea>`;
+      }else if(f.type==='select'){
+        h+=`<select id="f_${f.key}" data-k="${f.key}">`;
+        if(!project[f.key]) h+=`<option value="">—</option>`;
+        (f.options||[]).forEach(o=>{h+=`<option ${project[f.key]===o?'selected':''}>${esc(o)}</option>`;});
+        h+=`</select>`;
+      }else{
+        h+=`<input id="f_${f.key}" data-k="${f.key}" value="${val}" placeholder="${esc(f.placeholder)}">`;
+      }
+      if(f.help) h+=`<div class="hint">${esc(f.help)}</div>`;
+      h+=`</div>`;
+    });
+    h+=`</div></details>`;
+  }
+  $('#form').innerHTML=h;
+  $('#form').querySelectorAll('[data-k]').forEach(el=>{
+    el.addEventListener('input',e=>{project[e.target.dataset.k]=e.target.value;onChange();});
+    el.addEventListener('change',e=>{project[e.target.dataset.k]=e.target.value;onChange();});
+  });
+}
+
+/* ---------- render: documents ---------- */
+function renderDocs(){
+  let h='';
+  DATA.docs.forEach((d,i)=>{
+    const filled=fillDoc(d.template);
+    h+=`<details class="doc" ${i===0?'open':''}>
+      <summary><span class="chev">›</span><span class="fname">${esc(d.path.split('/').pop())}</span>
+      <span class="fpath">${esc(d.path)}</span>
+      <button class="copy" data-doc="${i}">⧉ copiar</button></summary>
+      <div class="codewrap"><pre>${esc(filled)}</pre></div></details>`;
+  });
+  const docsEl=$('#docs'); docsEl.innerHTML=h;
+  docsEl.querySelectorAll('[data-doc]').forEach(b=>b.addEventListener('click',e=>{
+    e.preventDefault();e.stopPropagation();
+    copyText(fillDoc(DATA.docs[+b.dataset.doc].template),b);
+  }));
+}
+function allDocsMarkdown(){
+  return DATA.docs.map(d=>`<!-- ${d.path} -->\n`+fillDoc(d.template)).join('\n\n\n');
+}
+
+/* ---------- render: agents ---------- */
+function agentMarkdown(a){
+  const r=a.restrictions.map(([t,x])=>(t==='x'?'- ✗ ':'- ✓ ')+x).join('\n');
+  const o=a.output.map(x=>'- '+x).join('\n');
+  let md=`# ${a.emoji} ${a.name} · ${a.level}\n\n> ${a.tagline}\n\n## Restricciones\n${r}\n\n## Prompt\n\`\`\`text\n${fillAgentPrompt(a.prompt)}\n\`\`\`\n\n## Output esperado\n${o}\n`;
+  if(a.id==='orchestrator'){for(const v in DATA.orchVariants){md+=`\n## Variante — ${v}\n\`\`\`text\n${fillAgentPrompt(DATA.orchVariants[v])}\n\`\`\`\n`;}}
+  return md;
+}
+function renderAgents(){
+  const order=['Arquitectos','Constructores','Especialistas de Negocio','Auditores','Coordinador'];
+  const desc={'Arquitectos':'Piensan. No programan. Diseñan y evalúan.','Constructores':'Programan. Cada uno en su dominio. Sin cruzar fronteras.','Especialistas de Negocio':'El moat competitivo. Conocen el dominio. Validan lógica.','Auditores':'Dan el mayor valor por hora. Encuentran lo que no ves.','Coordinador':'El prompt maestro. Orquesta la jerarquía completa.'};
+  let h='';
+  order.forEach((g,gi)=>{
+    const ags=DATA.agents.filter(a=>a.group===g); if(!ags.length)return;
+    h+=`<div class="lvl"><div class="lvl-h"><span class="num">0${gi+1}</span><span class="nm">${g}</span><span class="ds">${desc[g]||''}</span></div>`;
+    ags.forEach((a,idx)=>{
+      const gi2=DATA.agents.indexOf(a);
+      const chips=a.restrictions.map(([t,x])=>`<span class="chip ${t==='x'?'x':'ok'}">${t==='x'?'✗':'✓'} ${esc(x)}</span>`).join('');
+      const out=a.output.map(x=>`<li>${esc(x)}</li>`).join('');
+      h+=`<details class="agent" style="border-left-color:${a.color}" ${gi===0&&idx===0?'open':''}>
+        <summary><span class="emoji">${a.emoji}</span>
+          <span><span class="nm" style="color:${a.color}">${esc(a.name)}</span> <span class="lv">· ${esc(a.level)}</span>
+          <div class="tag">${esc(a.tagline)}</div></span>
+          <span class="chev">›</span></summary>
+        <div class="chips">${chips}</div>
+        <div class="agent-body">
+          <div class="mini" style="display:flex"><span>prompt de sistema</span>
+            <button class="copy" data-agent="${gi2}" style="margin-left:auto">⧉ copiar prompt</button></div>
+          <div class="codewrap" style="border-radius:9px;border:1px solid var(--border)"><pre>${hlPlaceholders(fillAgentPrompt(a.prompt))}</pre></div>
+          <div class="mini">output esperado</div><ul class="outlist">${out}</ul>
+        </div></details>`;
+    });
+    h+=`</div>`;
+  });
+  const el=$('#agents'); el.innerHTML=h;
+  el.querySelectorAll('[data-agent]').forEach(b=>b.addEventListener('click',e=>{
+    e.preventDefault();e.stopPropagation();
+    copyText(fillAgentPrompt(DATA.agents[+b.dataset.agent].prompt),b);
+  }));
+}
+
+/* ---------- render: master ---------- */
+function renderMaster(){
+  const blocks=[['Prompt maestro · orquestación completa',DATA.masterPrompt]];
+  for(const v in DATA.orchVariants) blocks.push([v,DATA.orchVariants[v]]);
+  let h='';
+  blocks.forEach(([title,p],i)=>{
+    h+=`<details class="doc" ${i===0?'open':''}><summary><span class="chev">›</span>
+      <span class="fname">${esc(title)}</span>
+      <button class="copy" data-master="${i}">⧉ copiar</button></summary>
+      <div class="codewrap"><pre>${hlPlaceholders(fillAgentPrompt(p))}</pre></div></details>`;
+  });
+  const el=$('#master'); el.innerHTML=h;
+  el.querySelectorAll('[data-master]').forEach(b=>b.addEventListener('click',e=>{
+    e.preventDefault();e.stopPropagation();
+    const idx=+b.dataset.master;
+    const p=idx===0?DATA.masterPrompt:Object.values(DATA.orchVariants)[idx-1];
+    copyText(fillAgentPrompt(p),b);
+  }));
+}
+
+/* ---------- render: kickoff ---------- */
+function renderKick(){
+  const name=project.projectName?(' · '+project.projectName):'';
+  let h=`<p style="font-family:var(--sans);font-weight:700;font-size:16px;margin-bottom:14px">Día de arranque${esc(name)}</p>`;
+  DATA.kickoff.forEach((blk,i)=>{
+    const [time,num,title,mode,groups]=blk;
+    let body='';
+    groups.forEach(([gh,items])=>{
+      body+=`<div class="mini" style="margin-top:14px"><span>${esc(gh.replace(/^\/\/\s*/,''))}</span></div><ul class="checks">`;
+      items.forEach(it=>{body+=`<li><input type="checkbox"><span>${esc(it)}</span></li>`;});
+      body+=`</ul>`;
+    });
+    h+=`<details class="ko" ${i===0?'open':''}><summary>
+      <span class="time">${esc(time)}</span><span class="knum">${esc(num)}</span>
+      <span class="ktitle">${esc(title)}</span><span class="kmode">${esc(mode)}</span><span class="chev">›</span></summary>
+      <div class="ko-body">${body}</div></details>`;
+  });
+  const el=$('#kick'); el.innerHTML=h;
+  el.querySelectorAll('.checks li input').forEach(c=>c.addEventListener('change',e=>{
+    e.target.closest('li').classList.toggle('done',e.target.checked);
+  }));
+}
+
+/* ---------- fill counter ---------- */
+function updateCounter(){
+  const tot=DATA.fields.length;
+  const filled=DATA.fields.filter(f=>(project[f.key]||'').toString().trim()).length;
+  $('#fillc').textContent=filled+'/'+tot;
+}
+
+/* ---------- orchestrate ---------- */
+let raf=null;
+function onChange(){if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{renderDocs();renderAgents();renderMaster();renderKick();updateCounter();});}
+function renderAll(){renderForm();renderDocs();renderAgents();renderMaster();renderKick();updateCounter();}
+
+/* ---------- zip ---------- */
+function buildZip(){
+  if(typeof JSZip==='undefined'){toast('JSZip no disponible (sin conexión). Usa "copiar".');return;}
+  const zip=new JSZip();
+  const slug=slugify(project.projectName);
+  const root=zip.folder(slug);
+  DATA.docs.forEach(d=>root.file(d.path,fillDoc(d.template)));
+  for(const n in DATA.aux) root.file(n,fillDoc(DATA.aux[n]));
+  const ag=root.folder('docs/design/agents');
+  DATA.agents.forEach(a=>ag.file(a.id+'.md',agentMarkdown(a)));
+  ag.file('MASTER-PROMPT.md','# Prompt Maestro — orquestación completa\n\n```text\n'+fillAgentPrompt(DATA.masterPrompt)+'\n```\n');
+  root.file('project.config.json',JSON.stringify(project,null,2));
+  zip.generateAsync({type:'blob'}).then(b=>{download(b,slug+'.zip');toast('Descargando '+slug+'.zip');});
+}
+
+/* ---------- config import/export ---------- */
+function exportConfig(){const slug=slugify(project.projectName);download(new Blob([JSON.stringify(project,null,2)],{type:'application/json'}),slug+'.config.json');toast('Config exportada');}
+function importConfig(file){const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);project=Object.assign({},DATA.defaults,o);renderAll();toast('Config importada');}catch(e){toast('JSON inválido');}};r.readAsText(file);}
+
+/* ---------- tabs ---------- */
+$('#tabs').addEventListener('click',e=>{
+  const t=e.target.closest('.tab'); if(!t)return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tabpanel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active'); $('#tab-'+t.dataset.tab).classList.add('active');
+});
+
+/* ---------- wire buttons ---------- */
+$('#regen').addEventListener('click',()=>{onChange();toast('Regenerado');});
+$('#zipBtn').addEventListener('click',buildZip);
+$('#exportBtn').addEventListener('click',exportConfig);
+$('#importBtn').addEventListener('click',()=>$('#fileInput').click());
+$('#fileInput').addEventListener('change',e=>{if(e.target.files[0])importConfig(e.target.files[0]);e.target.value='';});
+$('#copyAllDocs').addEventListener('click',e=>copyText(allDocsMarkdown(),e.target));
+$('#loadExample').addEventListener('click',()=>{project=Object.assign({},DATA.defaults,DATA.example||{});renderAll();toast('Ejemplo cargado: '+(project.projectName||''));});
+$('#resetBtn').addEventListener('click',()=>{project=Object.assign({},DATA.defaults);renderAll();toast('Formulario limpio');});
+
+$('#stAgents').textContent=DATA.agents.length;
+$('#stDocs').textContent=DATA.docs.length;
+$('#bAgents').textContent=DATA.agents.length;
+$('#bDocs').textContent=DATA.docs.length;
+
+renderAll();
+</script>
+</body>
+</html>

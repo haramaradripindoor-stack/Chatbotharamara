@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Día de Inicio de Proyecto</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --text: #e2e2f0;
+    --muted: #5a5a7a;
+    --success: #22c55e;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  .header {
+    padding: 3rem 2rem 2rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::after {
+    content: 'DEV DAY';
+    position: absolute;
+    right: -2rem;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 6rem;
+    color: var(--border);
+    letter-spacing: -0.05em;
+    user-select: none;
+  }
+
+  .header-tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .header-tag::before {
+    content: '';
+    width: 1.5rem;
+    height: 1px;
+    background: var(--accent);
+    display: inline-block;
+  }
+
+  h1 {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    max-width: 700px;
+  }
+
+  h1 span {
+    color: var(--accent);
+  }
+
+  .subtitle {
+    margin-top: 1rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+    max-width: 500px;
+    line-height: 1.8;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 2rem;
+    align-items: center;
+  }
+
+  .progress-seg {
+    height: 3px;
+    flex: 1;
+    background: var(--border);
+    border-radius: 99px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .progress-seg.active { background: var(--accent); }
+  .progress-seg.done { background: var(--success); opacity: 0.6; }
+
+  /* Main layout */
+  .main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* Phase blocks */
+  .phase {
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .phase.active-phase {
+    border-color: var(--accent);
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.2rem 1.5rem;
+    cursor: pointer;
+    background: var(--surface);
+    user-select: none;
+    transition: background 0.2s;
+  }
+
+  .phase-header:hover { background: #16161f; }
+
+  .phase-time {
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    min-width: 90px;
+    opacity: 0.8;
+  }
+
+  .phase-num {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--muted);
+    min-width: 24px;
+  }
+
+  .phase-title {
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .phase-badge {
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 99px;
+    border: 1px solid;
+    text-transform: uppercase;
+  }
+
+  .badge-think { color: var(--accent3); border-color: var(--accent3); background: rgba(124,58,237,0.1); }
+  .badge-build { color: var(--accent2); border-color: var(--accent2); background: rgba(255,107,53,0.1); }
+  .badge-ship { color: var(--success); border-color: var(--success); background: rgba(34,197,94,0.1); }
+  .badge-review { color: var(--accent); border-color: var(--accent); background: rgba(232,255,71,0.1); }
+
+  .phase-toggle {
+    color: var(--muted);
+    font-size: 0.8rem;
+    transition: transform 0.3s;
+  }
+
+  .phase.open .phase-toggle { transform: rotate(180deg); }
+
+  /* Phase body */
+  .phase-body {
+    display: none;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+
+  .phase.open .phase-body { display: block; }
+
+  .tasks-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  @media (max-width: 640px) {
+    .tasks-grid { grid-template-columns: 1fr; }
+  }
+
+  .task-col {
+    padding: 1.5rem;
+    border-right: 1px solid var(--border);
+  }
+
+  .task-col:last-child { border-right: none; }
+
+  .task-col-title {
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .task-item {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    group: '';
+  }
+
+  .task-check {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .task-check.checked {
+    background: var(--success);
+    border-color: var(--success);
+  }
+
+  .task-check.checked::after {
+    content: '✓';
+    color: #000;
+    font-size: 10px;
+    font-weight: bold;
+  }
+
+  .task-text {
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--text);
+    transition: color 0.2s;
+  }
+
+  .task-text.done {
+    color: var(--muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--border);
+  }
+
+  .task-note {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+    font-style: italic;
+  }
+
+  /* Agent prompt blocks */
+  .prompt-block {
+    margin: 1rem 1.5rem 1.5rem;
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent3);
+    border-radius: 0 2px 2px 0;
+    padding: 1rem 1.2rem;
+    position: relative;
+  }
+
+  .prompt-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    color: var(--accent3);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .prompt-label::after {
+    content: 'COPIAR';
+    margin-left: auto;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 0.2s;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+  }
+
+  .prompt-block:hover .prompt-label::after { color: var(--accent); }
+
+  .prompt-text {
+    font-size: 0.75rem;
+    line-height: 1.8;
+    color: #9090b0;
+    white-space: pre-line;
+  }
+
+  /* Divider */
+  .phase-divider {
+    padding: 0.75rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .divider-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .divider-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 0.75rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    z-index: 100;
+  }
+
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .stat-value.green { color: var(--success); }
+
+  .reset-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .reset-btn:hover {
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+
+  /* Spacer for fixed bar */
+  .bottom-spacer { height: 4rem; }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .phase-body { animation: fadeIn 0.25s ease; }
+
+  /* Current time indicator */
+  .current-time {
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-tag">// protocolo de arranque</div>
+  <h1>Día completo<br>para <span>iniciar</span><br>proyectos</h1>
+  <p class="subtitle">Guía de flujo para lanzar cualquier proyecto desde cero. Desde la idea hasta el primer commit productivo.</p>
+  <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<div class="main" id="main">
+
+  <!-- FASE 0 -->
+  <div class="phase" id="phase-0">
+    <div class="phase-header" onclick="togglePhase(0)">
+      <span class="phase-time">07:00 – 08:00</span>
+      <span class="phase-num">00</span>
+      <span class="phase-title">Contexto y claridad</span>
+      <span class="phase-badge badge-think">PENSAR</span>
+      <span class="phase-toggle">▼</span>
+    </div>
+    <div class="phase-body">
+      <div class="tasks-grid">
+        <div class="task-col">
+          <div class="task-col-title">// antes de abrir el editor</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Escribe el problema en una frase</div>
+              <div class="task-note">Si no puedes en una frase, no está claro</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Define quién lo usará y con qué frecuencia</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Escribe el resultado mínimo que da valor</div>
+              <div class="task-note">Tu MVP real, no el ideal</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Identifica proyectos existentes similares</div>
+              <div class="task-note">¿Puedes extender uno? ¿Reusar stack?</div>
+            </div>
+          </div>
+        </div>
+        <div class="task-col">
+          <div class="task-col-title">// decisiones que bloquean después</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">¿Es para cliente o para ti?</div>
+              <div class="task-note">Afecta monetización, deadline, scope</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">¿Stack fijo o nuevo?</div>
+              <div class="task-note">Next.js + Supabase por defecto si no hay razón</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">¿Tiene fecha de entrega real?</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Anota 3 riesgos técnicos antes de empezar</div>
+              <div class="task-note">Lo que podría romperse primero</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="prompt-block" onclick="copyPrompt(this)">
+        <div class="prompt-label">🏛️ CTOAgent — prompt de arranque</div>
+        <div class="prompt-text">Actúa como CTO.
+
+Proyecto: [nombre]
+Problema: [una frase]
+Usuario: [quién, frecuencia]
+MVP: [resultado mínimo con valor]
+Stack considerado: [opciones]
+
+Analiza:
+1. ¿Es el stack correcto para este problema?
+2. ¿Qué riesgos técnicos no estoy viendo?
+3. ¿Qué decisiones de arquitectura debo tomar HOY?
+
+No programes. Entrega análisis y 3 riesgos priorizados.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASE 1 -->
+  <div class="phase" id="phase-1">
+    <div class="phase-header" onclick="togglePhase(1)">
+      <span class="phase-time">08:00 – 09:30</span>
+      <span class="phase-num">01</span>
+      <span class="phase-title">Arquitectura y datos</span>
+      <span class="phase-badge badge-think">PENSAR</span>
+      <span class="phase-toggle">▼</span>
+    </div>
+    <div class="phase-body">
+      <div class="tasks-grid">
+        <div class="task-col">
+          <div class="task-col-title">// diseño antes de código</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Dibuja las entidades principales (papel o Excalidraw)</div>
+              <div class="task-note">5 entidades o menos para un MVP</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Define relaciones entre tablas</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Decide qué columnas necesita el MVP (no el v2)</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Anota las políticas RLS que necesitarás</div>
+              <div class="task-note">¿Quién lee? ¿Quién escribe? ¿Roles?</div>
+            </div>
+          </div>
+        </div>
+        <div class="task-col">
+          <div class="task-col-title">// estructura del proyecto</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Define estructura de carpetas antes de crear archivos</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Decide naming conventions (inglés vs español)</div>
+              <div class="task-note">Y anótalo en CLAUDE.md desde el día 1</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Define dónde va la lógica de negocio</div>
+              <div class="task-note">API routes vs edge functions vs client</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">¿Necesitas auth? Define el modelo desde ya</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="prompt-block" onclick="copyPrompt(this)">
+        <div class="prompt-label">🗄️ DataArchitectAgent — diseño de BD</div>
+        <div class="prompt-text">Actúa como Data Architect especialista en PostgreSQL y Supabase.
+
+Proyecto: [nombre]
+Entidades identificadas: [lista]
+Usuarios y roles: [descripción]
+
+Diseña:
+1. Schema SQL completo con tipos correctos
+2. Relaciones (FK, índices necesarios)
+3. Políticas RLS por tabla y rol
+4. Migraciones en orden correcto
+
+Restricciones:
+- No sugieras tablas para v2
+- Nombra columnas en snake_case
+- No toques React ni rutas Next.js</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASE 2 -->
+  <div class="phase" id="phase-2">
+    <div class="phase-header" onclick="togglePhase(2)">
+      <span class="phase-time">09:30 – 10:00</span>
+      <span class="phase-num">02</span>
+      <span class="phase-title">UX y flujos</span>
+      <span class="phase-badge badge-think">PENSAR</span>
+      <span class="phase-toggle">▼</span>
+    </div>
+    <div class="phase-body">
+      <div class="tasks-grid">
+        <div class="task-col">
+          <div class="task-col-title">// flujos del usuario</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Dibuja el happy path principal (la acción más importante)</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">¿Cuántas pantallas necesita el MVP?</div>
+              <div class="task-note">Menos de 5 si es posible</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Anota los estados de carga, vacío y error para cada vista</div>
+            </div>
+          </div>
+        </div>
+        <div class="task-col">
+          <div class="task-col-title">// decisiones de interfaz</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">¿Mobile-first o desktop-first?</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Paleta de colores y tipografía (solo 2 colores MVP)</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">¿Shadcn? ¿Componentes custom? ¿Cuánto diseño importa?</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="prompt-block" onclick="copyPrompt(this)">
+        <div class="prompt-label">🎨 UXUIAgent — flujo y pantallas</div>
+        <div class="prompt-text">Actúa como UX/UI designer especialista en apps de negocio.
+
+Proyecto: [nombre]
+Usuario: [descripción, nivel técnico]
+Acción principal: [qué hace el usuario en el 80% de las visitas]
+Plataforma: [mobile / desktop / ambas]
+
+Diseña:
+1. Mapa de navegación (solo pantallas MVP)
+2. Wireframe textual del happy path
+3. Estados críticos (vacío, cargando, error) por pantalla
+4. 3 decisiones de UX que impactan la adopción
+
+No programes. No sugieras v2 features.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASE 3 -->
+  <div class="phase" id="phase-3">
+    <div class="phase-header" onclick="togglePhase(3)">
+      <span class="phase-time">10:00 – 13:00</span>
+      <span class="phase-num">03</span>
+      <span class="phase-title">Construcción — Bloque 1</span>
+      <span class="phase-badge badge-build">CONSTRUIR</span>
+      <span class="phase-toggle">▼</span>
+    </div>
+    <div class="phase-body">
+      <div class="tasks-grid">
+        <div class="task-col">
+          <div class="task-col-title">// setup inicial (10:00–11:00)</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Crear repo GitHub + rama main protegida</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Inicializar proyecto con stack decidido</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Crear proyecto en Supabase + variables .env</div>
+              <div class="task-note">NUNCA commitear .env</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Primer commit: "feat: project init"</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Deploy a Vercel (aunque sea vacío)</div>
+              <div class="task-note">URL real desde el día 1</div>
+            </div>
+          </div>
+        </div>
+        <div class="task-col">
+          <div class="task-col-title">// base técnica (11:00–13:00)</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Ejecutar migraciones SQL en Supabase</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Configurar cliente Supabase (server + client)</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Crear layout base + navegación principal</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Crear CLAUDE.md con stack + reglas del proyecto</div>
+              <div class="task-note">Invierte 15 min aquí, ahorra horas después</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="prompt-block" onclick="copyPrompt(this)">
+        <div class="prompt-label">⚛️ FrontendAgent + 🔌 BackendAgent — primer módulo</div>
+        <div class="prompt-text">Stack: Next.js 14 + Supabase + TypeScript + Tailwind
+
+Reglas de este proyecto:
+- Imports de Supabase solo desde supabase-server.ts
+- Params de rutas dinámicas son async (Next.js 16)
+- Colores: [primario] / [secundario]
+- Naming: snake_case en BD, camelCase en TS
+
+Construye: [módulo específico]
+
+FrontendAgent:
+- Solo componentes React/Tailwind
+- No modifica BD ni API routes
+
+BackendAgent:
+- Solo API routes y lógica de negocio
+- No modifica componentes UI</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAUSA -->
+  <div class="phase-divider">
+    <span class="divider-label">// pausa 13:00–14:00 — sal del computador</span>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- FASE 4 -->
+  <div class="phase" id="phase-4">
+    <div class="phase-header" onclick="togglePhase(4)">
+      <span class="phase-time">14:00 – 17:00</span>
+      <span class="phase-num">04</span>
+      <span class="phase-title">Construcción — Bloque 2</span>
+      <span class="phase-badge badge-build">CONSTRUIR</span>
+      <span class="phase-toggle">▼</span>
+    </div>
+    <div class="phase-body">
+      <div class="tasks-grid">
+        <div class="task-col">
+          <div class="task-col-title">// módulos de negocio (14:00–16:00)</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Construir happy path completo end-to-end</div>
+              <div class="task-note">Que el usuario pueda hacer la acción principal</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Estados de carga en todas las acciones async</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Manejo de errores básico (no silencioso)</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Estados vacíos con CTAs claros</div>
+            </div>
+          </div>
+        </div>
+        <div class="task-col">
+          <div class="task-col-title">// refinamiento (16:00–17:00)</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Probar el happy path manualmente</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Commit por módulo completado</div>
+              <div class="task-note">No commits de "wip" al final del día</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Deploy y verificar en Vercel</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Anotar deuda técnica en CLAUDE.md</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="prompt-block" onclick="copyPrompt(this)">
+        <div class="prompt-label">📦 DomainBot — lógica de negocio específica</div>
+        <div class="prompt-text">Actúa como especialista en [dominio del proyecto].
+
+Conoces: [reglas de negocio específicas, normativas, contexto]
+
+El módulo que estamos construyendo: [descripción]
+
+Verifica:
+1. ¿La lógica respeta las reglas de negocio?
+2. ¿Hay casos edge del dominio que no estamos cubriendo?
+3. ¿Qué validaciones son críticas para este contexto?
+
+No programes. Entrega análisis de dominio.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASE 5 -->
+  <div class="phase" id="phase-5">
+    <div class="phase-header" onclick="togglePhase(5)">
+      <span class="phase-time">17:00 – 18:30</span>
+      <span class="phase-num">05</span>
+      <span class="phase-title">Auditoría y cierre</span>
+      <span class="phase-badge badge-review">REVISAR</span>
+      <span class="phase-toggle">▼</span>
+    </div>
+    <div class="phase-body">
+      <div class="tasks-grid">
+        <div class="task-col">
+          <div class="task-col-title">// auditoría (17:00–18:00)</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">QAAgent: revisar bugs y edge cases</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">SecurityAgent: revisar RLS y exposición de datos</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Verificar que .env no está en el repo</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Probar en mobile (si aplica)</div>
+            </div>
+          </div>
+        </div>
+        <div class="task-col">
+          <div class="task-col-title">// cierre del día (18:00–18:30)</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Actualizar CHANGELOG.md con lo construido hoy</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Escribir 3 tareas para mañana (no más)</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Commit final: "chore: end of day — [resumen]"</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">¿Se puede mostrar algo a alguien hoy?</div>
+              <div class="task-note">Si no, el MVP scope era muy grande</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="prompt-block" onclick="copyPrompt(this)">
+        <div class="prompt-label">🔍 QAAgent + 🔒 SecurityAgent — auditoría diaria</div>
+        <div class="prompt-text">Actúa como QA Senior + Security Auditor.
+
+Revisa el código construido hoy para el proyecto [nombre].
+
+QA — busca:
+- Bugs evidentes y edge cases no manejados
+- Estados de error silenciosos
+- Validaciones faltantes en formularios
+- Problemas de UX que van a confundir al usuario
+
+Security — busca:
+- Políticas RLS incompletas o incorrectas
+- APIs sin autenticación
+- Datos sensibles expuestos al cliente
+- Variables de entorno hardcodeadas
+
+No programes. Entrega lista priorizada de issues.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASE 6 — SHIP -->
+  <div class="phase" id="phase-6">
+    <div class="phase-header" onclick="togglePhase(6)">
+      <span class="phase-time">18:30+</span>
+      <span class="phase-num">06</span>
+      <span class="phase-title">Ship o mañana</span>
+      <span class="phase-badge badge-ship">LANZAR</span>
+      <span class="phase-toggle">▼</span>
+    </div>
+    <div class="phase-body">
+      <div class="tasks-grid">
+        <div class="task-col">
+          <div class="task-col-title">// criterio de ship day 1</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">¿El happy path funciona de punta a punta?</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">¿No hay claves API en el código?</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">¿El deploy está verde?</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">¿Hay alguien que pueda probarlo hoy?</div>
+            </div>
+          </div>
+        </div>
+        <div class="task-col">
+          <div class="task-col-title">// si no ships, cuándo</div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Define fecha concreta de primer usuario real</div>
+              <div class="task-note">Sin fecha = nunca</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Recorta scope si la fecha no es esta semana</div>
+            </div>
+          </div>
+          <div class="task-item" onclick="toggleTask(this)">
+            <div class="task-check"></div>
+            <div>
+              <div class="task-text">Agenda demo con cliente/usuario aunque no esté listo</div>
+              <div class="task-note">Las demos fuerzan el ship</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="bottom-spacer"></div>
+
+<div class="stats-bar">
+  <div class="stat">
+    <span class="stat-label">Completadas</span>
+    <span class="stat-value" id="doneCount">0</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Total</span>
+    <span class="stat-value" id="totalCount">0</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Progreso</span>
+    <span class="stat-value green" id="pctCount">0%</span>
+  </div>
+  <div class="stat" style="margin-left:auto; margin-right:0;">
+    <span class="current-time" id="clockDisplay"></span>
+  </div>
+  <button class="reset-btn" onclick="resetAll()">↺ reset</button>
+</div>
+
+<script>
+  // State
+  let state = JSON.parse(localStorage.getItem('devday_state') || '{}');
+
+  function togglePhase(idx) {
+    const phase = document.getElementById('phase-' + idx);
+    phase.classList.toggle('open');
+    updateProgress();
+  }
+
+  function toggleTask(el) {
+    const check = el.querySelector('.task-check');
+    const text = el.querySelector('.task-text');
+    const isChecked = check.classList.toggle('checked');
+    text.classList.toggle('done', isChecked);
+    // Save state
+    const key = el.closest('.phase').id + '_' + Array.from(el.parentNode.children).indexOf(el);
+    state[key] = isChecked;
+    localStorage.setItem('devday_state', JSON.stringify(state));
+    updateStats();
+  }
+
+  function copyPrompt(el) {
+    const text = el.querySelector('.prompt-text').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const label = el.querySelector('.prompt-label');
+      const original = label.style.setProperty('--after-content', '"✓ COPIADO"');
+      label.style.cssText += '; --color: var(--success)';
+      setTimeout(() => { label.style.cssText = ''; }, 1500);
+    });
+  }
+
+  function updateStats() {
+    const checks = document.querySelectorAll('.task-check');
+    const done = document.querySelectorAll('.task-check.checked');
+    document.getElementById('doneCount').textContent = done.length;
+    document.getElementById('totalCount').textContent = checks.length;
+    const pct = checks.length > 0 ? Math.round((done.length / checks.length) * 100) : 0;
+    document.getElementById('pctCount').textContent = pct + '%';
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const phases = document.querySelectorAll('.phase');
+    const bar = document.getElementById('progressBar');
+    bar.innerHTML = '';
+    phases.forEach((phase, i) => {
+      const seg = document.createElement('div');
+      seg.className = 'progress-seg';
+      const checks = phase.querySelectorAll('.task-check');
+      const done = phase.querySelectorAll('.task-check.checked');
+      if (done.length === checks.length && checks.length > 0) seg.classList.add('done');
+      else if (phase.classList.contains('open')) seg.classList.add('active');
+      seg.onclick = () => togglePhase(i);
+      bar.appendChild(seg);
+    });
+  }
+
+  function resetAll() {
+    if (!confirm('¿Resetear todas las tareas?')) return;
+    document.querySelectorAll('.task-check').forEach(c => c.classList.remove('checked'));
+    document.querySelectorAll('.task-text').forEach(t => t.classList.remove('done'));
+    state = {};
+    localStorage.setItem('devday_state', JSON.stringify(state));
+    updateStats();
+  }
+
+  function restoreState() {
+    // Restore checkboxes
+    document.querySelectorAll('.phase').forEach(phase => {
+      const items = phase.querySelectorAll('.task-item');
+      items.forEach((item, i) => {
+        const key = phase.id + '_' + i;
+        if (state[key]) {
+          item.querySelector('.task-check').classList.add('checked');
+          item.querySelector('.task-text').classList.add('done');
+        }
+      });
+    });
+  }
+
+  // Clock
+  function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('clockDisplay').textContent = h + ':' + m;
+  }
+
+  // Auto-open current phase based on time
+  function autoOpenPhase() {
+    const h = new Date().getHours();
+    const m = new Date().getMinutes();
+    const t = h * 60 + m;
+    const phaseMap = [
+      [7*60, 8*60],   // fase 0
+      [8*60, 9*60+30],
+      [9*60+30, 10*60],
+      [10*60, 13*60],
+      [14*60, 17*60],
+      [17*60, 18*60+30],
+      [18*60+30, 23*60]
+    ];
+    phaseMap.forEach((range, i) => {
+      if (t >= range[0] && t < range[1]) {
+        document.getElementById('phase-' + i).classList.add('open', 'active-phase');
+      }
+    });
+  }
+
+  // Init
+  restoreState();
+  updateStats();
+  autoOpenPhase();
+  updateClock();
+  setInterval(updateClock, 30000);
+</script>
+</body>
+</html>

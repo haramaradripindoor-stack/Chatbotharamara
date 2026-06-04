@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Framework de Orquestación de Agentes</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080810;
+    --surface: #0e0e1a;
+    --surface2: #13131f;
+    --border: #1a1a2e;
+    --border2: #252540;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --accent4: #06b6d4;
+    --text: #e2e2f0;
+    --muted: #4a4a6a;
+    --muted2: #6a6a8a;
+    --success: #22c55e;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+
+    /* Agent colors */
+    --cto: #e8ff47;
+    --data: #22c55e;
+    --ux: #06b6d4;
+    --back: #ff6b35;
+    --front: #a855f7;
+    --qa: #f59e0b;
+    --sec: #ef4444;
+    --perf: #0ea5e9;
+    --full: #64748b;
+    --coord: #e2e2f0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline effect */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 900;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 3rem 2rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, #0d0d1f 0%, var(--bg) 100%);
+  }
+
+  .header-bg-text {
+    position: absolute;
+    right: -1rem;
+    bottom: -1.5rem;
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: clamp(5rem, 14vw, 10rem);
+    color: transparent;
+    -webkit-text-stroke: 1px var(--border2);
+    letter-spacing: -0.05em;
+    user-select: none;
+    line-height: 1;
+  }
+
+  .header-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .eyebrow-line {
+    width: 2rem;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .eyebrow-text {
+    font-size: 0.6rem;
+    letter-spacing: 0.35em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    line-height: 0.92;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    max-width: 700px;
+    position: relative;
+  }
+
+  h1 .highlight { color: var(--accent); }
+  h1 .dim { color: var(--muted2); }
+
+  .header-desc {
+    margin-top: 1.2rem;
+    color: var(--muted2);
+    font-size: 0.75rem;
+    max-width: 520px;
+    line-height: 1.9;
+    position: relative;
+  }
+
+  .header-meta {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+    position: relative;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .meta-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .meta-value {
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav-tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    padding: 1rem 1.5rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted2);
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    user-select: none;
+  }
+
+  .tab:hover { color: var(--text); }
+
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: rgba(232,255,71,0.03);
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── PIPELINE ── */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  .pipeline::before {
+    content: '';
+    position: absolute;
+    left: 2.5rem;
+    top: 2rem;
+    bottom: 2rem;
+    width: 1px;
+    background: linear-gradient(180deg, var(--border2) 0%, var(--border2) 100%);
+  }
+
+  /* ── PHASE ROW ── */
+  .phase-row {
+    display: grid;
+    grid-template-columns: 5rem 1fr;
+    gap: 0;
+    position: relative;
+  }
+
+  .phase-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 1.75rem;
+  }
+
+  .phase-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--border2);
+    background: var(--bg);
+    z-index: 1;
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+
+  .phase-row:hover .phase-dot {
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(232,255,71,0.3);
+  }
+
+  .phase-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    margin: 0.4rem 0;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .phase-card:hover { border-color: var(--border2); }
+  .phase-card.expanded { border-color: var(--border2); }
+
+  .phase-top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.2rem 1.5rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .phase-num {
+    font-family: var(--sans);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--muted);
+    min-width: 1.5rem;
+  }
+
+  .phase-name {
+    font-family: var(--sans);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .phase-agent-tag {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.7rem;
+    border-radius: 99px;
+    border: 1px solid;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .phase-rule {
+    font-size: 0.65rem;
+    color: var(--muted2);
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .phase-toggle {
+    color: var(--muted);
+    font-size: 0.7rem;
+    transition: transform 0.3s;
+    margin-left: 0.5rem;
+  }
+
+  .phase-card.expanded .phase-toggle { transform: rotate(180deg); }
+
+  .phase-body {
+    display: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .phase-card.expanded .phase-body { display: block; }
+
+  /* ── AGENT COLOR CLASSES ── */
+  .agent-cto   { color: var(--cto);   border-color: var(--cto);   background: rgba(232,255,71,0.06); }
+  .agent-data  { color: var(--data);  border-color: var(--data);  background: rgba(34,197,94,0.06); }
+  .agent-ux    { color: var(--ux);    border-color: var(--ux);    background: rgba(6,182,212,0.06); }
+  .agent-back  { color: var(--back);  border-color: var(--back);  background: rgba(255,107,53,0.06); }
+  .agent-front { color: var(--front); border-color: var(--front); background: rgba(168,85,247,0.06); }
+  .agent-qa    { color: var(--qa);    border-color: var(--qa);    background: rgba(245,158,11,0.06); }
+  .agent-sec   { color: var(--sec);   border-color: var(--sec);   background: rgba(239,68,68,0.06); }
+  .agent-perf  { color: var(--perf);  border-color: var(--perf);  background: rgba(14,165,233,0.06); }
+  .agent-coord { color: var(--coord); border-color: var(--border2);background: rgba(255,255,255,0.02); }
+
+  /* ── PHASE CONTENT GRID ── */
+  .phase-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  @media (max-width: 620px) {
+    .phase-content { grid-template-columns: 1fr; }
+    .phase-connector { display: none; }
+    .phase-row { grid-template-columns: 1fr; }
+    .pipeline::before { display: none; }
+  }
+
+  .content-col {
+    padding: 1.5rem;
+    border-right: 1px solid var(--border);
+  }
+
+  .content-col:last-child { border-right: none; }
+
+  .col-title {
+    font-size: 0.58rem;
+    letter-spacing: 0.25em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  /* ── INSTRUCTION LIST ── */
+  .inst-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .inst-item {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: var(--muted2);
+  }
+
+  .inst-item::before {
+    content: '—';
+    color: var(--muted);
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+  }
+
+  .inst-item strong {
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  /* ── RULE TAG ── */
+  .rule-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    padding: 0.3rem 0.7rem;
+    border-radius: 2px;
+    border: 1px solid var(--border2);
+    color: var(--accent2);
+    background: rgba(255,107,53,0.05);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  /* ── PROMPT BLOCK ── */
+  .prompt-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-top: none;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .prompt-block::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .prompt-block:hover::before { opacity: 1; }
+
+  .prompt-block:hover { border-color: var(--border2); }
+
+  .prompt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .prompt-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted2);
+  }
+
+  .copy-hint {
+    font-size: 0.55rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .prompt-block:hover .copy-hint { opacity: 1; }
+
+  .prompt-text {
+    font-size: 0.75rem;
+    line-height: 1.8;
+    color: var(--text);
+    white-space: pre-wrap;
+    font-family: var(--mono);
+  }
+
+  .copy-flash {
+    position: absolute;
+    inset: 0;
+    background: rgba(232,255,71,0.04);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+  }
+
+  .copy-flash.show { opacity: 1; }
+
+  /* ── THE MASTER PROMPT ── */
+  .master-section {
+    margin-top: 2rem;
+  }
+
+  .master-card {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .master-header {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, rgba(232,255,71,0.04) 0%, transparent 100%);
+  }
+
+  .master-title {
+    font-family: var(--sans);
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+  }
+
+  .master-subtitle {
+    font-size: 0.65rem;
+    color: var(--muted2);
+    margin-top: 0.25rem;
+    letter-spacing: 0.1em;
+  }
+
+  .master-badge {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    padding: 0.35rem 0.9rem;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    text-transform: uppercase;
+    background: rgba(232,255,71,0.06);
+  }
+
+  /* ── AGENT GRID (reference panel) ── */
+  .agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 1rem;
+  }
+
+  .agent-card {
+    background: var(--surface);
+    padding: 1.2rem 1.5rem;
+    transition: background 0.2s;
+  }
+
+  .agent-card:hover { background: var(--surface2); }
+
+  .agent-name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .agent-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .agent-name {
+    font-family: var(--sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .agent-phase-tag {
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 99px;
+    border: 1px solid var(--border2);
+    color: var(--muted2);
+    text-transform: uppercase;
+    margin-left: auto;
+  }
+
+  .agent-desc {
+    font-size: 0.7rem;
+    color: var(--muted2);
+    line-height: 1.7;
+  }
+
+  .agent-cant {
+    font-size: 0.65rem;
+    color: var(--accent2);
+    margin-top: 0.6rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .agent-cant::before { content: '✗'; flex-shrink: 0; margin-top: 0.05rem; }
+
+  /* ── PRINCIPLE CARDS ── */
+  .principles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .principle-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    border-radius: 2px;
+  }
+
+  .principle-num {
+    font-family: var(--sans);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--border2);
+    line-height: 1;
+    margin-bottom: 0.75rem;
+  }
+
+  .principle-title {
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .principle-desc {
+    font-size: 0.7rem;
+    color: var(--muted2);
+    line-height: 1.8;
+  }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow-diagram {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    overflow-x: auto;
+    padding: 2rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+
+  .flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 100px;
+    flex-shrink: 0;
+  }
+
+  .flow-node {
+    width: 70px;
+    height: 70px;
+    border: 1px solid;
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: default;
+    transition: all 0.2s;
+    text-align: center;
+    padding: 0.5rem;
+  }
+
+  .flow-node:hover {
+    transform: translateY(-2px);
+  }
+
+  .flow-node-emoji { font-size: 1.1rem; }
+  .flow-node-label { line-height: 1.3; }
+
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 0.25rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding-top: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .flow-phase-label {
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 0.6rem;
+    text-align: center;
+  }
+
+  /* ── BOTTOM BAR ── */
+  .bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(8,8,16,0.95);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 2rem;
+    gap: 2rem;
+    z-index: 800;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+  }
+
+  .bar-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--muted2);
+  }
+
+  .bar-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .bar-value { color: var(--text); }
+
+  .copy-toast {
+    position: fixed;
+    bottom: 4rem;
+    right: 2rem;
+    background: var(--accent);
+    color: #000;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    padding: 0.5rem 1rem;
+    border-radius: 2px;
+    font-weight: 700;
+    z-index: 999;
+    transform: translateY(10px);
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+  }
+
+  .copy-toast.show { transform: translateY(0); opacity: 1; }
+
+  .bottom-spacer { height: 4rem; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-bg-text">AGENTS</div>
+  <div class="header-eyebrow">
+    <div class="eyebrow-line"></div>
+    <div class="eyebrow-text">Antigravity Pro / OpenRouter / Claude</div>
+  </div>
+  <h1>
+    Framework de<br>
+    <span class="highlight">Orquestación</span><br>
+    <span class="dim">de Agentes</span>
+  </h1>
+  <p class="header-desc">
+    No un generador de código. Un equipo de desarrollo.<br>
+    7 fases · 8 agentes especializados · 1 disciplina.
+  </p>
+  <div class="header-meta">
+    <div class="meta-item">
+      <span class="meta-label">Agentes</span>
+      <span class="meta-value">8</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Fases</span>
+      <span class="meta-value">7</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Regla #1</span>
+      <span class="meta-value">No programar sin diseño aprobado</span>
+    </div>
+  </div>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-tabs">
+  <div class="tab active" onclick="switchTab('pipeline', this)">Pipeline completo</div>
+  <div class="tab" onclick="switchTab('agentes', this)">Referencia de agentes</div>
+  <div class="tab" onclick="switchTab('master', this)">El prompt maestro</div>
+  <div class="tab" onclick="switchTab('principios', this)">Principios</div>
+</div>
+
+<div class="main">
+
+  <!-- ══════════ TAB: PIPELINE ══════════ -->
+  <div id="tab-pipeline" class="tab-panel active">
+
+    <!-- Visual flow -->
+    <div class="section-label">// flujo visual</div>
+    <div class="flow-diagram">
+      <div class="flow-step">
+        <div class="flow-node agent-cto">
+          <span class="flow-node-emoji">🧠</span>
+          <span class="flow-node-label">CTO Agent</span>
+        </div>
+        <div class="flow-phase-label">Pensar</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-node agent-data">
+          <span class="flow-node-emoji">🗄️</span>
+          <span class="flow-node-label">Data Arch</span>
+        </div>
+        <div class="flow-phase-label">Datos</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-node agent-ux">
+          <span class="flow-node-emoji">🎨</span>
+          <span class="flow-node-label">UX/UI Agent</span>
+        </div>
+        <div class="flow-phase-label">UX</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-node agent-back">
+          <span class="flow-node-emoji">⚙️</span>
+          <span class="flow-node-label">Backend Agent</span>
+        </div>
+        <div class="flow-phase-label">Construir</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-node agent-front">
+          <span class="flow-node-emoji">🖥️</span>
+          <span class="flow-node-label">Frontend Agent</span>
+        </div>
+        <div class="flow-phase-label">Construir</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-node agent-qa">
+          <span class="flow-node-emoji">🔍</span>
+          <span class="flow-node-label">QA Agent</span>
+        </div>
+        <div class="flow-phase-label">Auditar</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-node agent-sec">
+          <span class="flow-node-emoji">🔒</span>
+          <span class="flow-node-label">Security Agent</span>
+        </div>
+        <div class="flow-phase-label">Seguridad</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-node agent-perf">
+          <span class="flow-node-emoji">⚡</span>
+          <span class="flow-node-label">Perf Agent</span>
+        </div>
+        <div class="flow-phase-label">Rendimiento</div>
+      </div>
+    </div>
+
+    <!-- Pipeline phases -->
+    <div class="section-label" style="margin-top:2rem">// fases detalladas</div>
+    <div class="pipeline">
+
+      <!-- FASE 1 -->
+      <div class="phase-row">
+        <div class="phase-connector"><div class="phase-dot"></div></div>
+        <div class="phase-card" id="ph1">
+          <div class="phase-top" onclick="togglePhase('ph1')">
+            <span class="phase-num">01</span>
+            <span class="phase-name">Pensar</span>
+            <span class="phase-agent-tag agent-cto">CTOAgent</span>
+            <span class="phase-rule">No programar</span>
+            <span class="phase-toggle">▼</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-content">
+              <div class="content-col">
+                <div class="col-title">// qué pedir</div>
+                <div class="inst-list">
+                  <div class="inst-item"><strong>Analiza esta funcionalidad</strong></div>
+                  <div class="inst-item"><strong>Arquitectura</strong> — componentes, servicios, dependencias</div>
+                  <div class="inst-item"><strong>Riesgos</strong> — técnicos, de producto, de escala</div>
+                  <div class="inst-item"><strong>Impacto</strong> — qué otras partes del sistema toca</div>
+                  <div class="inst-item"><strong>Fases</strong> — cómo dividir el trabajo</div>
+                </div>
+              </div>
+              <div class="content-col">
+                <div class="col-title">// output esperado</div>
+                <div class="inst-list">
+                  <div class="inst-item">Diagrama de arquitectura textual</div>
+                  <div class="inst-item">Lista de riesgos priorizada</div>
+                  <div class="inst-item">Diseño de BD requerido (sin SQL todavía)</div>
+                  <div class="inst-item">UX requerida (sin wireframes todavía)</div>
+                  <div class="inst-item">Plan de fases ordenado</div>
+                </div>
+              </div>
+            </div>
+            <div class="prompt-block" onclick="copyBlock(this)">
+              <div class="prompt-header">
+                <span class="prompt-label">// prompt — CTOAgent</span>
+                <span class="copy-hint">↑ click para copiar</span>
+              </div>
+              <div class="prompt-text">Actúa como CTOAgent.
+
+Analiza esta funcionalidad: [DESCRIBE LA FUNCIONALIDAD]
+
+No programes.
+
+Diseña:
+1. Arquitectura — componentes, flujos, dependencias
+2. Riesgos — técnicos, de negocio, de escalabilidad
+3. Impacto — qué partes del sistema existente afecta
+4. Fases de implementación — ordenadas por prioridad
+
+Entrega el análisis completo.
+No escribas código hasta que apruebe el diseño.</div>
+              <div class="copy-flash"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 2 -->
+      <div class="phase-row">
+        <div class="phase-connector"><div class="phase-dot"></div></div>
+        <div class="phase-card" id="ph2">
+          <div class="phase-top" onclick="togglePhase('ph2')">
+            <span class="phase-num">02</span>
+            <span class="phase-name">Datos</span>
+            <span class="phase-agent-tag agent-data">DataArchitectAgent</span>
+            <span class="phase-rule">Todavía sin código</span>
+            <span class="phase-toggle">▼</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-content">
+              <div class="content-col">
+                <div class="col-title">// qué pedir</div>
+                <div class="inst-list">
+                  <div class="inst-item"><strong>Tablas</strong> — entidades y sus campos clave</div>
+                  <div class="inst-item"><strong>Relaciones</strong> — FK, cardinalidades, join patterns</div>
+                  <div class="inst-item"><strong>Índices</strong> — qué queries serán frecuentes</div>
+                  <div class="inst-item"><strong>RLS</strong> — qué filas puede ver cada rol</div>
+                  <div class="inst-item"><strong>Migraciones</strong> — orden seguro de ejecución</div>
+                </div>
+              </div>
+              <div class="content-col">
+                <div class="col-title">// output esperado</div>
+                <div class="inst-list">
+                  <div class="inst-item">Schema en texto (aún sin SQL ejecutable)</div>
+                  <div class="inst-item">Diagrama ER simplificado</div>
+                  <div class="inst-item">Políticas RLS descritas en lenguaje natural</div>
+                  <div class="inst-item">Lista de índices recomendados con justificación</div>
+                </div>
+              </div>
+            </div>
+            <div class="prompt-block" onclick="copyBlock(this)">
+              <div class="prompt-header">
+                <span class="prompt-label">// prompt — DataArchitectAgent</span>
+                <span class="copy-hint">↑ click para copiar</span>
+              </div>
+              <div class="prompt-text">Actúa como DataArchitectAgent.
+
+Proyecto: [NOMBRE]
+Funcionalidad: [DESCRIBE]
+
+Diseña el modelo de datos completo:
+
+1. Tablas — nombre, campos, tipos, constraints
+2. Relaciones — FK, cardinalidades, patrones de join
+3. Índices — identifica qué queries serán frecuentes y qué índices necesitan
+4. RLS — describe las políticas de Row Level Security por rol de usuario
+5. Migraciones — orden de ejecución sin riesgo de datos
+
+No escribas el SQL todavía.
+Primero valida el diseño conmigo.</div>
+              <div class="copy-flash"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 3 -->
+      <div class="phase-row">
+        <div class="phase-connector"><div class="phase-dot"></div></div>
+        <div class="phase-card" id="ph3">
+          <div class="phase-top" onclick="togglePhase('ph3')">
+            <span class="phase-num">03</span>
+            <span class="phase-name">UX</span>
+            <span class="phase-agent-tag agent-ux">UXUIAgent</span>
+            <span class="phase-rule">Diseño antes de código</span>
+            <span class="phase-toggle">▼</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-content">
+              <div class="content-col">
+                <div class="col-title">// qué pedir</div>
+                <div class="inst-list">
+                  <div class="inst-item"><strong>Pantallas</strong> — listado de vistas necesarias</div>
+                  <div class="inst-item"><strong>Flujos</strong> — cómo navega el usuario</div>
+                  <div class="inst-item"><strong>Wireframes</strong> — estructura de cada pantalla</div>
+                  <div class="inst-item"><strong>Estados</strong> — vacío, cargando, error, éxito</div>
+                </div>
+              </div>
+              <div class="content-col">
+                <div class="col-title">// output esperado</div>
+                <div class="inst-list">
+                  <div class="inst-item">Mapa de pantallas con navegación</div>
+                  <div class="inst-item">Wireframe textual de cada vista</div>
+                  <div class="inst-item">Lista de componentes reutilizables</div>
+                  <div class="inst-item">Estados de UI documentados</div>
+                </div>
+              </div>
+            </div>
+            <div class="prompt-block" onclick="copyBlock(this)">
+              <div class="prompt-header">
+                <span class="prompt-label">// prompt — UXUIAgent</span>
+                <span class="copy-hint">↑ click para copiar</span>
+              </div>
+              <div class="prompt-text">Actúa como UXUIAgent.
+
+Proyecto: [NOMBRE]
+Funcionalidad: [DESCRIBE]
+Usuario objetivo: [DESCRIBE BREVEMENTE]
+
+Diseña la experiencia completa:
+
+1. Pantallas — lista todas las vistas necesarias
+2. Flujos — cómo navega el usuario de A a B
+3. Wireframes — estructura y jerarquía de cada pantalla clave
+4. Estados de UI — vacío, cargando, error, éxito para cada vista
+5. Componentes reutilizables — identifica qué se repite
+
+No construyas nada todavía.
+Necesito validar el diseño antes de implementar.</div>
+              <div class="copy-flash"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 4a -->
+      <div class="phase-row">
+        <div class="phase-connector"><div class="phase-dot"></div></div>
+        <div class="phase-card" id="ph4a">
+          <div class="phase-top" onclick="togglePhase('ph4a')">
+            <span class="phase-num">04a</span>
+            <span class="phase-name">Backend</span>
+            <span class="phase-agent-tag agent-back">BackendAgent</span>
+            <span class="phase-rule">Primero</span>
+            <span class="phase-toggle">▼</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-content">
+              <div class="content-col">
+                <div class="col-title">// qué implementar</div>
+                <div class="inst-list">
+                  <div class="inst-item"><strong>APIs</strong> — endpoints, métodos, respuestas</div>
+                  <div class="inst-item"><strong>Lógica de negocio</strong> — validaciones, transformaciones</div>
+                  <div class="inst-item"><strong>Validaciones</strong> — inputs, permisos, edge cases</div>
+                  <div class="inst-item"><strong>Migraciones SQL</strong> — basadas en diseño aprobado</div>
+                </div>
+              </div>
+              <div class="content-col">
+                <div class="col-title">// orden de entrega</div>
+                <div class="inst-list">
+                  <div class="inst-item">Primero: migraciones de BD</div>
+                  <div class="inst-item">Segundo: lógica y validaciones core</div>
+                  <div class="inst-item">Tercero: endpoints REST o funciones edge</div>
+                  <div class="inst-item">Cuarto: manejo de errores explícito</div>
+                </div>
+              </div>
+            </div>
+            <div class="prompt-block" onclick="copyBlock(this)">
+              <div class="prompt-header">
+                <span class="prompt-label">// prompt — BackendAgent</span>
+                <span class="copy-hint">↑ click para copiar</span>
+              </div>
+              <div class="prompt-text">Actúa como BackendAgent.
+
+Proyecto: [NOMBRE]
+Stack: [Supabase / Next.js / etc.]
+Diseño aprobado: [pega el output del CTOAgent y DataArchitectAgent]
+
+Implementa en este orden:
+1. Migraciones SQL — tablas, índices, RLS
+2. Funciones/Edge functions o API routes
+3. Validaciones de input y permisos
+4. Manejo explícito de errores (no silenciar nada)
+
+Sé explícito con los tipos.
+Comenta decisiones no obvias.
+No implementes el frontend todavía.</div>
+              <div class="copy-flash"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 4b -->
+      <div class="phase-row">
+        <div class="phase-connector"><div class="phase-dot"></div></div>
+        <div class="phase-card" id="ph4b">
+          <div class="phase-top" onclick="togglePhase('ph4b')">
+            <span class="phase-num">04b</span>
+            <span class="phase-name">Frontend</span>
+            <span class="phase-agent-tag agent-front">FrontendAgent</span>
+            <span class="phase-rule">Después del backend</span>
+            <span class="phase-toggle">▼</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-content">
+              <div class="content-col">
+                <div class="col-title">// qué implementar</div>
+                <div class="inst-list">
+                  <div class="inst-item"><strong>Componentes</strong> — reutilizables, con props tipadas</div>
+                  <div class="inst-item"><strong>Páginas</strong> — rutas según wireframes aprobados</div>
+                  <div class="inst-item"><strong>Tablas y formularios</strong> — con estados completos</div>
+                  <div class="inst-item"><strong>Integración con API</strong> — llamadas reales, no mocks</div>
+                </div>
+              </div>
+              <div class="content-col">
+                <div class="col-title">// estados que siempre hay que cubrir</div>
+                <div class="inst-list">
+                  <div class="inst-item">Estado vacío (no hay datos)</div>
+                  <div class="inst-item">Estado de carga (skeleton/spinner)</div>
+                  <div class="inst-item">Estado de error (mensaje claro)</div>
+                  <div class="inst-item">Estado de éxito (feedback visible)</div>
+                </div>
+              </div>
+            </div>
+            <div class="prompt-block" onclick="copyBlock(this)">
+              <div class="prompt-header">
+                <span class="prompt-label">// prompt — FrontendAgent</span>
+                <span class="copy-hint">↑ click para copiar</span>
+              </div>
+              <div class="prompt-text">Actúa como FrontendAgent.
+
+Proyecto: [NOMBRE]
+Stack: [Next.js / React / Tailwind / etc.]
+Diseño UX aprobado: [pega el output del UXUIAgent]
+APIs disponibles: [lista los endpoints ya implementados]
+
+Implementa en este orden:
+1. Componentes reutilizables (con props tipadas)
+2. Páginas según wireframes aprobados
+3. Integración real con las APIs del backend
+4. Estados completos: vacío, cargando, error, éxito
+
+No inventes datos. Usa las APIs reales.
+Cubre todos los estados de UI, no solo el happy path.</div>
+              <div class="copy-flash"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 5 -->
+      <div class="phase-row">
+        <div class="phase-connector"><div class="phase-dot"></div></div>
+        <div class="phase-card" id="ph5">
+          <div class="phase-top" onclick="togglePhase('ph5')">
+            <span class="phase-num">05</span>
+            <span class="phase-name">Auditoría QA</span>
+            <span class="phase-agent-tag agent-qa">QAAgent</span>
+            <span class="phase-rule">Buscar, no reparar</span>
+            <span class="phase-toggle">▼</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-content">
+              <div class="content-col">
+                <div class="col-title">// qué buscar</div>
+                <div class="inst-list">
+                  <div class="inst-item"><strong>Bugs evidentes</strong> — errores en lógica</div>
+                  <div class="inst-item"><strong>Edge cases</strong> — null, vacío, extremos</div>
+                  <div class="inst-item"><strong>Errores silenciosos</strong> — catch vacíos, fallos sin feedback</div>
+                  <div class="inst-item"><strong>Problemas de UX</strong> — confusión, flujos rotos</div>
+                  <div class="inst-item"><strong>Validaciones faltantes</strong> — en formularios y endpoints</div>
+                </div>
+              </div>
+              <div class="content-col">
+                <div class="col-title">// output esperado</div>
+                <div class="inst-list">
+                  <div class="inst-item">Lista priorizada de issues</div>
+                  <div class="inst-item">Severidad: crítico / medio / menor</div>
+                  <div class="inst-item">Descripción precisa del problema</div>
+                  <div class="inst-item">Sugerencia de fix (sin implementar)</div>
+                </div>
+              </div>
+            </div>
+            <div class="prompt-block" onclick="copyBlock(this)">
+              <div class="prompt-header">
+                <span class="prompt-label">// prompt — QAAgent</span>
+                <span class="copy-hint">↑ click para copiar</span>
+              </div>
+              <div class="prompt-text">Actúa como QAAgent.
+
+Proyecto: [NOMBRE]
+Código a revisar: [pega el código relevante o describe el scope]
+
+Busca en modo auditoría:
+
+1. Bugs evidentes y lógica incorrecta
+2. Edge cases no manejados (null, vacío, límites)
+3. Errores silenciados (catch vacíos, fallos sin feedback al usuario)
+4. Problemas de UX que van a confundir al usuario real
+5. Validaciones faltantes en formularios o endpoints
+
+Entrega lista priorizada por severidad: crítico / medio / menor.
+No corrijas todavía. Solo identifica.</div>
+              <div class="copy-flash"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 6 -->
+      <div class="phase-row">
+        <div class="phase-connector"><div class="phase-dot"></div></div>
+        <div class="phase-card" id="ph6">
+          <div class="phase-top" onclick="togglePhase('ph6')">
+            <span class="phase-num">06</span>
+            <span class="phase-name">Seguridad</span>
+            <span class="phase-agent-tag agent-sec">SecurityAgent</span>
+            <span class="phase-rule">Siempre antes de deploy</span>
+            <span class="phase-toggle">▼</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-content">
+              <div class="content-col">
+                <div class="col-title">// qué auditar</div>
+                <div class="inst-list">
+                  <div class="inst-item"><strong>Supabase RLS</strong> — ¿cada tabla tiene policies?</div>
+                  <div class="inst-item"><strong>Permisos</strong> — ¿quién puede leer/escribir qué?</div>
+                  <div class="inst-item"><strong>Endpoints</strong> — ¿hay APIs sin autenticación?</div>
+                  <div class="inst-item"><strong>Variables de entorno</strong> — ¿nada hardcodeado?</div>
+                  <div class="inst-item"><strong>Datos sensibles</strong> — ¿expuestos al cliente?</div>
+                </div>
+              </div>
+              <div class="content-col">
+                <div class="col-title">// señales de alerta</div>
+                <div class="inst-list">
+                  <div class="inst-item">SELECT * sin filtro de usuario</div>
+                  <div class="inst-item">Ausencia de .env en .gitignore</div>
+                  <div class="inst-item">Service key usada en cliente</div>
+                  <div class="inst-item">RLS disabled en tablas con datos sensibles</div>
+                  <div class="inst-item">Queries sin validación de propiedad</div>
+                </div>
+              </div>
+            </div>
+            <div class="prompt-block" onclick="copyBlock(this)">
+              <div class="prompt-header">
+                <span class="prompt-label">// prompt — SecurityAgent</span>
+                <span class="copy-hint">↑ click para copiar</span>
+              </div>
+              <div class="prompt-text">Actúa como SecurityAgent especializado en Supabase y Next.js.
+
+Proyecto: [NOMBRE]
+Scope: [describe las partes a auditar]
+
+Audita en este orden:
+
+1. RLS de Supabase — ¿cada tabla sensible tiene políticas activas?
+2. Permisos por rol — ¿hay escalación de privilegios posible?
+3. Endpoints — ¿hay rutas que no verifican sesión?
+4. Variables de entorno — ¿hay keys hardcodeadas o expuestas al cliente?
+5. Datos sensibles — ¿qué llega al frontend que no debería?
+
+Entrega lista de vulnerabilidades por severidad.
+No corrijas todavía.</div>
+              <div class="copy-flash"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 7 -->
+      <div class="phase-row">
+        <div class="phase-connector"><div class="phase-dot"></div></div>
+        <div class="phase-card" id="ph7">
+          <div class="phase-top" onclick="togglePhase('ph7')">
+            <span class="phase-num">07</span>
+            <span class="phase-name">Rendimiento</span>
+            <span class="phase-agent-tag agent-perf">PerformanceAgent</span>
+            <span class="phase-rule">Solo si hay escala real</span>
+            <span class="phase-toggle">▼</span>
+          </div>
+          <div class="phase-body">
+            <div class="phase-content">
+              <div class="content-col">
+                <div class="col-title">// qué buscar</div>
+                <div class="inst-list">
+                  <div class="inst-item"><strong>Queries lentas</strong> — N+1, sin índice, full scan</div>
+                  <div class="inst-item"><strong>Renders innecesarios</strong> — re-renders, datos no memoizados</div>
+                  <div class="inst-item"><strong>Escalabilidad</strong> — ¿qué rompe a 10,000 usuarios?</div>
+                  <div class="inst-item"><strong>Bundle size</strong> — imports innecesarios, code splitting</div>
+                </div>
+              </div>
+              <div class="content-col">
+                <div class="col-title">// cuándo ejecutar</div>
+                <div class="inst-list">
+                  <div class="inst-item">Después de QA y Security, no antes</div>
+                  <div class="inst-item">Solo si el feature ya funciona correctamente</div>
+                  <div class="inst-item">Priorizar: BD → servidor → cliente</div>
+                  <div class="inst-item">No optimizar lo que no tiene usuarios aún</div>
+                </div>
+              </div>
+            </div>
+            <div class="prompt-block" onclick="copyBlock(this)">
+              <div class="prompt-header">
+                <span class="prompt-label">// prompt — PerformanceAgent</span>
+                <span class="copy-hint">↑ click para copiar</span>
+              </div>
+              <div class="prompt-text">Actúa como PerformanceAgent.
+
+Proyecto: [NOMBRE]
+Escala esperada: [ej: 500 usuarios concurrentes, 1M de registros]
+
+Analiza el rendimiento en tres capas:
+
+1. Base de datos
+   — Queries con N+1 implícito
+   — Full table scans sin índice
+   — Joins costosos que se pueden materializar
+
+2. Servidor / Edge
+   — Funciones que deberían ser cacheadas
+   — Llamadas a APIs externas sincrónicas innecesarias
+
+3. Cliente
+   — Componentes que re-renderizan sin necesidad
+   — Bundle size: dependencias pesadas evitables
+   — Datos cargados pero no usados
+
+Entrega lista de problemas por impacto potencial.
+No optimices todavía.</div>
+              <div class="copy-flash"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /pipeline -->
+  </div><!-- /tab-pipeline -->
+
+
+  <!-- ══════════ TAB: AGENTES ══════════ -->
+  <div id="tab-agentes" class="tab-panel">
+    <div class="section-label">// directorio de agentes</div>
+    <div class="agents-grid">
+
+      <div class="agent-card">
+        <div class="agent-name-row">
+          <div class="agent-dot" style="background:var(--cto)"></div>
+          <span class="agent-name">CTOAgent</span>
+          <span class="agent-phase-tag">Fase 1</span>
+        </div>
+        <div class="agent-desc">Analiza funcionalidades. Diseña arquitectura, identifica riesgos y planifica fases. Orquesta a los demás agentes.</div>
+        <div class="agent-cant">No programa. Solo diseña y planifica.</div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-name-row">
+          <div class="agent-dot" style="background:var(--data)"></div>
+          <span class="agent-name">DataArchitectAgent</span>
+          <span class="agent-phase-tag">Fase 2</span>
+        </div>
+        <div class="agent-desc">Diseña el modelo de datos: tablas, relaciones, índices, RLS y migraciones. Especialista en Supabase/PostgreSQL.</div>
+        <div class="agent-cant">No escribe código de aplicación. Solo BD.</div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-name-row">
+          <div class="agent-dot" style="background:var(--ux)"></div>
+          <span class="agent-name">UXUIAgent</span>
+          <span class="agent-phase-tag">Fase 3</span>
+        </div>
+        <div class="agent-desc">Diseña pantallas, flujos de navegación, wireframes y estados de UI. Enfocado en experiencia real del usuario.</div>
+        <div class="agent-cant">No escribe componentes hasta que se apruebe el diseño.</div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-name-row">
+          <div class="agent-dot" style="background:var(--back)"></div>
+          <span class="agent-name">BackendAgent</span>
+          <span class="agent-phase-tag">Fase 4a</span>
+        </div>
+        <div class="agent-desc">Implementa APIs, lógica de negocio, validaciones y migraciones SQL. Siempre va antes que el frontend.</div>
+        <div class="agent-cant">No construye UI. No toca componentes React.</div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-name-row">
+          <div class="agent-dot" style="background:var(--front)"></div>
+          <span class="agent-name">FrontendAgent</span>
+          <span class="agent-phase-tag">Fase 4b</span>
+        </div>
+        <div class="agent-desc">Implementa componentes, páginas y formularios. Integra con las APIs ya construidas. Cubre todos los estados de UI.</div>
+        <div class="agent-cant">No inventa datos. Siempre usa APIs reales del backend.</div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-name-row">
+          <div class="agent-dot" style="background:var(--qa)"></div>
+          <span class="agent-name">QAAgent</span>
+          <span class="agent-phase-tag">Fase 5</span>
+        </div>
+        <div class="agent-desc">Audita el código buscando bugs, edge cases, errores silenciosos y problemas de UX. Prioriza por severidad.</div>
+        <div class="agent-cant">No repara. Solo identifica y reporta.</div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-name-row">
+          <div class="agent-dot" style="background:var(--sec)"></div>
+          <span class="agent-name">SecurityAgent</span>
+          <span class="agent-phase-tag">Fase 6</span>
+        </div>
+        <div class="agent-desc">Audita RLS, permisos, endpoints sin auth, variables expuestas y datos sensibles. Especialista en Supabase security.</div>
+        <div class="agent-cant">No parchea. Audita y reporta vulnerabilidades.</div>
+      </div>
+
+      <div class="agent-card">
+        <div class="agent-name-row">
+          <div class="agent-dot" style="background:var(--perf)"></div>
+          <span class="agent-name">PerformanceAgent</span>
+          <span class="agent-phase-tag">Fase 7</span>
+        </div>
+        <div class="agent-desc">Detecta queries lentas, renders innecesarios y problemas de escalabilidad. Solo actúa cuando el feature ya es correcto.</div>
+        <div class="agent-cant">No optimiza features rotos. La correctitud va primero.</div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ══════════ TAB: MASTER PROMPT ══════════ -->
+  <div id="tab-master" class="tab-panel">
+    <div class="section-label">// el prompt más rentable</div>
+    <p style="font-size:0.75rem; color:var(--muted2); line-height:1.9; max-width:600px; margin-bottom:2rem;">
+      Este prompt convierte Antigravity (o Claude, o cualquier sistema de agentes) de un generador de código en un equipo de desarrollo completo. Ideal para ERP, CRM, logística, RRHH o control de obras.
+    </p>
+
+    <div class="master-card">
+      <div class="master-header">
+        <div>
+          <div class="master-title">El Prompt Maestro</div>
+          <div class="master-subtitle">CTOAgent como orquestador · diseño antes de código · aprobación requerida</div>
+        </div>
+        <div class="master-badge">Constructor Garabito · ERP · CRM</div>
+      </div>
+      <div class="prompt-block" onclick="copyBlock(this)" style="border:none; border-top:1px solid var(--border);">
+        <div class="prompt-header">
+          <span class="prompt-label">// prompt de orquestación completa</span>
+          <span class="copy-hint">↑ click para copiar</span>
+        </div>
+        <div class="prompt-text">Actúa como CTOAgent.
+
+Analiza esta funcionalidad: [DESCRIBE LA FUNCIONALIDAD]
+
+No programes todavía.
+
+Genera:
+
+1. Arquitectura
+   — Componentes del sistema
+   — Flujos de datos
+   — Dependencias con el sistema existente
+
+2. Riesgos
+   — Técnicos
+   — De producto
+   — De escalabilidad
+
+3. Diseño de BD requerido
+   — Tablas necesarias
+   — Relaciones clave
+   — Consideraciones de RLS
+
+4. UX requerida
+   — Pantallas necesarias
+   — Flujos de usuario
+   — Estados críticos
+
+5. Plan de implementación
+   — Fase 1: DataArchitectAgent → diseño de BD
+   — Fase 2: UXUIAgent → wireframes y flujos
+   — Fase 3: BackendAgent → APIs y migraciones
+   — Fase 4: FrontendAgent → componentes y páginas
+   — Fase 5: QAAgent → auditoría de bugs
+   — Fase 6: SecurityAgent → revisión de permisos y RLS
+
+Coordina los agentes necesarios.
+Entrega el trabajo por fases.
+No empieces a programar hasta que apruebe el diseño.</div>
+        <div class="copy-flash"></div>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top:2.5rem">// por qué funciona</div>
+    <div class="principles">
+      <div class="principle-card">
+        <div class="principle-num">01</div>
+        <div class="principle-title">Diseño antes que código</div>
+        <div class="principle-desc">El costo de cambiar un diseño es cero. El costo de reescribir código mal diseñado es enorme. La aprobación explícita es el gate de calidad.</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">02</div>
+        <div class="principle-title">Especialización real</div>
+        <div class="principle-desc">Un agente enfocado en seguridad piensa en seguridad. Uno enfocado en BD piensa en índices. La mezcla de roles produce soluciones mediocres.</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">03</div>
+        <div class="principle-title">Orden importa</div>
+        <div class="principle-desc">BD primero, luego APIs, luego UI. Construir el frontend sobre APIs inexistentes produce deuda técnica inmediata y mocks que nunca se reemplazan.</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num">04</div>
+        <div class="principle-title">Auditoría separada</div>
+        <div class="principle-desc">El agente que construye no es el que audita. QA y Security como fases independientes, no mezcladas con la construcción, producen revisiones más honestas.</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════ TAB: PRINCIPIOS ══════════ -->
+  <div id="tab-principios" class="tab-panel">
+    <div class="section-label">// cuándo saltar fases</div>
+    <div style="background:var(--surface); border:1px solid var(--border); padding:1.5rem; margin-bottom:2rem;">
+      <div class="inst-list">
+        <div class="inst-item" style="margin-bottom:0.75rem"><strong>Fix rápido (&lt;30 min)</strong> — saltar todo, ir directo al agente correcto con contexto mínimo</div>
+        <div class="inst-item" style="margin-bottom:0.75rem"><strong>Exploración / prototipo</strong> — solo CTOAgent + FullStackAgent para validar la idea rápido</div>
+        <div class="inst-item" style="margin-bottom:0.75rem"><strong>Feature nuevo en sistema grande</strong> — el flujo completo siempre, sin atajos</div>
+        <div class="inst-item"><strong>Bug de producción</strong> — QAAgent → SecurityAgent → fix directo, sin pasar por diseño</div>
+      </div>
+    </div>
+
+    <div class="section-label">// reglas de oro</div>
+    <div class="principles" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+      <div class="principle-card">
+        <div class="principle-num" style="color:var(--accent); -webkit-text-stroke:0;">✗</div>
+        <div class="principle-title">Nunca programar sin diseño aprobado</div>
+        <div class="principle-desc">Si el CTOAgent entrega una arquitectura y el usuario no la aprueba explícitamente, ningún otro agente debe producir código. Esta es la regla más importante del framework.</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num" style="color:var(--accent); -webkit-text-stroke:0;">✗</div>
+        <div class="principle-title">Nunca mezclar roles en un prompt</div>
+        <div class="principle-desc">Pedirle al BackendAgent que también diseñe la UX produce peores resultados en ambas dimensiones. Un prompt, un rol, un output específico.</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num" style="color:var(--accent); -webkit-text-stroke:0;">✗</div>
+        <div class="principle-title">No saltarse QA y Security antes de deploy</div>
+        <div class="principle-desc">Son los únicos pasos no negociables. El costo de un bug de seguridad en producción supera cualquier ahorro de tiempo en el proceso.</div>
+      </div>
+      <div class="principle-card">
+        <div class="principle-num" style="color:var(--success); -webkit-text-stroke:0;">✓</div>
+        <div class="principle-title">Pasar el output entre agentes</div>
+        <div class="principle-desc">El output del CTOAgent va al DataArchitectAgent. El de Data va al Backend. El contexto acumulado entre fases es lo que produce coherencia en el sistema final.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<div class="bottom-spacer"></div>
+
+<!-- BOTTOM BAR -->
+<div class="bottom-bar">
+  <div class="bar-item">
+    <div class="bar-dot"></div>
+    <span>Framework</span>
+    <span class="bar-value">v1.0</span>
+  </div>
+  <div class="bar-item">
+    <span>Agentes</span>
+    <span class="bar-value">8</span>
+  </div>
+  <div class="bar-item">
+    <span>Fases</span>
+    <span class="bar-value">7</span>
+  </div>
+  <div class="bar-item" style="margin-left:auto">
+    <span style="color:var(--muted)">Regla #1 —</span>
+    <span class="bar-value" style="color:var(--accent)">diseño antes de código</span>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="copy-toast" id="copyToast">✓ COPIADO</div>
+
+<script>
+  // Tab switching
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    el.classList.add('active');
+  }
+
+  // Phase toggle
+  function togglePhase(id) {
+    const card = document.getElementById(id);
+    card.classList.toggle('expanded');
+  }
+
+  // Copy prompt
+  function copyBlock(el) {
+    const text = el.querySelector('.prompt-text').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      // Flash effect
+      const flash = el.querySelector('.copy-flash');
+      if (flash) {
+        flash.classList.add('show');
+        setTimeout(() => flash.classList.remove('show'), 300);
+      }
+      // Toast
+      const toast = document.getElementById('copyToast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1800);
+    });
+  }
+
+  // Auto-expand first phase
+  document.getElementById('ph1').classList.add('expanded');
+</script>
+</body>
+</html>
